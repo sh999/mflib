@@ -43,6 +43,7 @@ class Core():
     """
 
     core_sanity_version = "1.0.23"
+    core_version = "1.0.23"
     """
     An updatable version for debugging purposes to make sure the correct version of this file is being used. Anyone can update this value as they see fit.
     Should always be increasing.
