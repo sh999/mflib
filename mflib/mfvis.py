@@ -34,7 +34,7 @@ import ipywidgets as widgets
 from IPython.display import display
 from fabrictestbed_extensions.fablib.fablib import fablib
 from fabrictestbed_extensions.fablib.fablib import FablibManager as fablib_manager
-from mflib import MFLib
+from mflib.mflib import MFLib
 # For testing
 #from mflib import mflib
 
