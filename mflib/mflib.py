@@ -46,7 +46,7 @@ from mflib.core import Core
 
 class MFLib(Core):
 
-    mflib_sanity_version = "1.0.23"
+    mflib_class_version = "1.0.23"
 
     def set_mflib_logger(self):
         """

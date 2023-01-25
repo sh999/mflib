@@ -38,8 +38,8 @@ from mflib import mflib
 # For testing
 #from mflib import mflib
 
-class mfvis(mflib):
-    mfvis_sanity_version = "2.02"
+class MFVis(MFLib):
+    mfvis_class_version = "2.02"
     meas_net_info = {}
     
     def __init__(self, slice_name="", local_storage_directory="/tmp/mflib"):
