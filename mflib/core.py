@@ -118,7 +118,7 @@ class Core():
 
         self.set_core_logger()
 
-        self.core_logger.info(f"Using core_sanity_version {self.core_sanity_version}")
+        self.core_logger.info(f"Using core_class_version {self.core_class_version}")
         #self.core_logger.basicConfig(filename=self.log_filename, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
         self.core_logger.info(f"-----Set slice name {value}.-----")
 
