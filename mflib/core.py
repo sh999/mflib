@@ -42,7 +42,7 @@ class Core():
     It is not intended to be used by itself, but rather, it is the base object for creating Measurement Framework Library objects.
     """
 
-    core_class_version = "1.0.23"
+    core_class_version = "1.0.30"
 
     """
     An updatable version for debugging purposes to make sure the correct version of this file is being used. Anyone can update this value as they see fit.
@@ -52,10 +52,10 @@ class Core():
         String: Version.sub-version.build
     """
 
-    def set_core_logger(self): #, filename=None):
+    def set_core_logger(self):
         """
-        Sets up the core logging file. If filename is given, then log is saved to that filename. Otherwise filename is created from the self.logging_filename.
-        Note that the self.logging_filename will be set with the slice when the slice name is set.
+        Sets up the core logging file.
+        Note that the self.logging_filename will be set with the slice name when the slice is set.
         Args:
         filename (_type_, optional): _description_. Defaults to None.
         """
@@ -64,14 +64,6 @@ class Core():
         self.core_logger.setLevel(self.log_level)
         
         formatter = logging.Formatter('%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %H:%M:%S %p')
-        #, level="INFO", force=True)
-        #logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
-        
-        # if filename:
-        #     self.log_filename = filename
-        #     # Make sure log directory exists
-        #     if not os.path.exists(os.path.dirname(self.log_filename)):
-        #         os.makedirs(os.path.dirname(self.log_filename))
 
         # Make sure log directory exists
         if not os.path.exists(self.log_directory):
@@ -97,7 +89,7 @@ class Core():
     def slice_name( self, value ):
         """
         Sets the name of the slice associated with this object. Also creates the directories used to store local informations for mflib about the slice.
-        Generally should not be called directly.
+        Generally should not be called directly. It is called when the slice is set.
         Args:
             value (str): Name of the slice
         """
@@ -165,10 +157,22 @@ class Core():
 
     @property 
     def local_mfuser_private_key_filename(self):
+        """
+        The local copy of the private ssh key for the mfuser account.
+
+        Returns:
+            String: The local copy of the private ssh key for the mfuser account.
+        """
         return os.path.join(self.local_slice_directory, "mfuser_private_key")    
 
     @property 
     def local_mfuser_public_key_filename(self):
+        """
+        The local copy of the public ssh key for the mfuser account.
+
+        Returns:
+            String: The local copy of the public ssh key for the mfuser account.
+        """
         return os.path.join(self.local_slice_directory, "mfuser_pubic_key")    
 
     @property
@@ -188,6 +192,12 @@ class Core():
             
     @property
     def meas_node_ip(self):
+        """
+        The management ip address for the Measurement Node
+
+        Returns:
+            String: ip address
+        """
         if self.meas_node:
             return self._meas_node.get_management_ip() 
         else:
@@ -195,6 +205,12 @@ class Core():
 
     @property
     def slice_username(self):
+        """
+        The default username for the Measurement Node for the slice.
+
+        Returns:
+            String: username
+        """
         if self.meas_node:
             return self._meas_node.get_username() 
         else:
@@ -210,7 +226,11 @@ class Core():
     @property
     def tunnel_host(self):
         """
-        If a tunnel is used, this value must be set for the localhost, Otherwise it is set to empty string."""
+        If a tunnel is used, this value must be set for the localhost, Otherwise it is set to empty string.
+
+        Returns:
+            String: tunnel hostname
+        """
         return self._tunnel_host
         
     @tunnel_host.setter
@@ -224,43 +244,64 @@ class Core():
     @property
     def grafana_tunnel_local_port(self):
         """
-        If a tunnel is used, this value must be set for the port"""
+        If a tunnel is used for grafana, this value must be set for the port.
+        Returns: 
+            String: port number
+        """
         return self._grafana_tunnel_local_port
         
     @grafana_tunnel_local_port.setter
     def grafana_tunnel_local_port(self, value):
         """ 
-        Set to port_number if using tunnnel.
+        Set to port_number if using tunnnel for grafana.
         """
         self._grafana_tunnel_local_port = value
-        
+
 
     @property
     def kibana_tunnel_local_port(self):
         """
-        If a tunnel is used, this value must be set for the port"""
+        If a tunnel is used for Kibana, this value must be set for the port"""
         return self._kibana_tunnel_local_port
         
     @kibana_tunnel_local_port.setter
     def kibana_tunnel_local_port(self, value):
         """ 
-        Set to port_number if using tunnnel.
+        Set to port_number if using tunnnel for Kibana.
         """
         self._kibana_tunnel_local_port = value
                 
     @property
     def grafana_tunnel(self):
+        """
+        Returns the command for createing an SSH tunnel for accesing Grafana.
+
+        Returns:
+            String: ssh command
+        """
         return self._meas_node_ssh_tunnel(local_port = self.grafana_tunnel_local_port, remote_port="443")
 
     @property
     def kibana_tunnel(self):
+        """
+        Returns the command for createing an SSH tunnel for accesing Kibana.
+
+        Returns:
+            String: ssh command
+        """
         return self._meas_node_ssh_tunnel(local_port = self.kibana_tunnel_local_port, remote_port="80")
 
     def _meas_node_ssh_tunnel(self, local_port, remote_port):
         """
-        Returns the SSH tunnel command for accessing the meas node via bastion host.
-        """
+        Creates the ssh tunnel command for accessing the Measurement Node using the given local and remote ports.
 
+        Args:
+            local_port (String): local port ie port on users machine
+            remote_port (String): remote port ie port on Measurement Node
+
+        Returns:
+            String : SSH command string or error string.
+        """
         slice_username = self.slice_username
         meas_node_ip = self.meas_node_ip
         
@@ -296,11 +337,17 @@ class Core():
 
     # Repo branch made class varible so it can be set before creating object
     mf_repo_branch = "main"
-    
+    """
+    The git branch to be used for cloning the MeasurementFramework branch to the Measusrement Node.
+    """
+
   
     def __init__(self, local_storage_directory="/tmp/mflib"):
         """
-        Constructor.
+        Core constructor
+
+        Args:
+            local_storage_directory (str, optional): Directory where local data will be stored. Defaults to "/tmp/mflib".
         """
         #super().__init__()
 
@@ -319,13 +366,11 @@ class Core():
         self.set_core_logger()
         self.core_logger.info("Creating mflib object.")
         
-        #self.mf_repo_branch = "dev"
         self.tunnel_host = "localhost"
         self.grafana_tunnel_local_port = "10010"
         self.kibana_tunnel_local_port = "10020"
 
 
-  
         # The slice object
         self.slice = None
         # The meas_node object
@@ -340,61 +385,11 @@ class Core():
         self.mfuser_private_key_filename = "mfuser_private_key"
         self.mfuser_public_key_filename = "mfuser_public_key"
 
-
-
-# # IPV6 to IPV4 only sites fix
-# # note: should set bootstrap status file when making these 2 calls, status should be set, restored, not needed.
-#     def set_DNS_all_nodes(self):
-#         # Check if we need to
-#         if(self.meas_node.validIPAddress(self.meas_node.get_management_ip())=="IPv6"):
-#             for node in self.slice.get_nodes():
-#                 self.set_DNS(node)
-#             return "set"
-#         else:
-#             return "not needed"
-
-#     def restore_DNS_all_nodes(self):
-#         # Check if we need to
-#         if(self.meas_node.validIPAddress(self.meas_node.get_management_ip())=="IPv6"):
-#             for node in self.slice.get_nodes():
-#                 self.restore_DNS(node)
-#             return "restored"
-#         else:
-#             return "not needed"
-
-#     def set_DNS(self,node):
-#         if(node.validIPAddress(node.get_management_ip())=="IPv6"):
-#             node.execute("""
-#             printf 'nameserver 2a00:1098:2c::1\nnameserver 2a01:4f8:c2c:123f::1\nnameserver 2a01:4f9:c010:3f02::1' > resolv.new;
-#             sudo mv /etc/resolv.conf /etc/resolv.old;
-#             sudo mv resolv.new /etc/resolv.conf;
-#             """)
-#             #Needed for fedora
-#             node.execute("""
-#                 sudo resolvectl dns eth0 2a00:1098:2c::1;
-#                 sudo resolvectl dns eth0 2a01:4f8:c2c:123f::1;
-#                 sudo
-#                 resolvectl dns eth0 2a01:4f9:c010:3f02::1;
-#             """)
-#             # TODO add error checking
-
-
-    def restore_DNS(self,node):
-        if(node.validIPAddress(node.get_management_ip())=="IPv6"):
-            node.execute("""
-                sudo mv /etc/resolv.old /etc/resolv.conf;
-            """)
-
-            node.execute("""
-                resolvectl revert eth0;
-            """)
-
           
 # User Methods 
     def create(self, service, data=None, files=[]):
         """
-        Creates a new service for the slice. The new service will be installed to the Measurement & experimental nodes as needed and started.
-
+        Creates a new service for the slice. 
         :param service: The name of the service.
         :type service: String
         :param data: Data to be passed to a JSON file place in the service's meas node directory.
@@ -408,8 +403,7 @@ class Core():
 
     def update(self, service, data=None, files=[]):
         """
-        Updates an existing service for the slice. The update command will upload any given data and files to the Measurement node and then run the update.py command. Update is intended to change the running service.
-
+        Updates an existing service for the slice.
         :param service: The name of the service.
         :type service: String
         :param data: Data to be passed to a JSON file place in the service's meas node directory.
@@ -424,7 +418,6 @@ class Core():
     def info(self, service, data=None):
         """
         Gets inormation from an existing service. Strictly gets information, does not change how the service is running.
-
         :param service: The name of the service.
         :type service: String
         :param data: Data to be passed to a JSON file place in the service's meas node directory.
@@ -570,7 +563,6 @@ class Core():
     def _find_meas_node(self):
         """
         Finds the node named "meas" in the slice and sets the value for class's meas_node
-
         :return: If node found, sets self.meas_node and returns True. If node not found, clears self.meas_node and returns False.
         :rtype: Boolean
         """
@@ -589,7 +581,6 @@ class Core():
     def _run_on_meas_node(self, service, command, data=None, files=[]):
         """
         Runs a command on the meas node.
-
         :param service: The name of the service.
         :type service: String
         :param command: The name of the command to run.
@@ -617,7 +608,6 @@ class Core():
     def _upload_service_data(self, service, data):
         """
         Uploads the json serializable object data to a json file on the meas node.
-
         :param service: The service to which the data belongs.
         :type service: String
         :param data: A JSON serializable dictionary 
@@ -661,7 +651,6 @@ class Core():
     def _upload_service_files(self, service, files):
         """
         Uploads the given local files to the given service's directory on the meas node.
-
         :param service: Service name for which the files are being upload to the meas node.
         :type service: String
         :param files: List of file paths on local machine.
@@ -702,7 +691,6 @@ class Core():
     def _run_service_command( self, service, command ):
         """
         Runs the given comand for the given service on the meas node. 
-
         :param service: Service name for which the command is being run on the meas node.
         :type service: String
         :param files: Command name.
@@ -750,7 +738,6 @@ class Core():
     def _download_service_file(self, service, filename, local_file_path=""):
         """
         Downloads service files from the meas node and places them in the local storage directory.
-
         :param service: Service name
         :type service: String
         :param filename: The filename to download from the meas node.
@@ -824,7 +811,6 @@ class Core():
     def get_bootstrap_status(self, force=True):
         """
         Returns the bootstrap status for the slice. Default setting of force will always download the most recent file from the meas node.
-
         :param force: If downloaded file already exists locally, it will not be downloaded unless force is True. The downloaded file will be stored locally for future reference. 
         :return: Bootstrap dict if any type of bootstraping has occured, None otherwise. 
         :rtype: dict
@@ -851,11 +837,33 @@ class Core():
         else:
             return {}
 
+    # def clear_bootstrap_status(self):
+    #     """
+    #     Deletes the local and remote copy of the bootstrap_status files. This will then allow a rerunning of the init bootstrapping process.  
+    #     This is mainly intended for testing/debugging.
+    #     Note that nothing will be removed from the nodes.  
+    #     """
+            
+    #     # Delete local copy
+    #     if os.path.exists(self.bootstrap_status_file):
+    #         os.remove(self.bootstrap_status_file)
+
+    #     # Delete measurement node copy
+    #     try:
+    #         full_command = "rm bootstrap_status.json"
+    #         stdout, stderr = self.meas_node.execute(full_command)
+    #         self.core_logger.info("Removed remote bootstrap_status file.")
+    #     except Exception as e:
+    #         print(f"rm bootstrap_status.json Failed: {e}")
+    #         self.core_logger.exception(f"rm bootstrap_status.json Failed: {e}")
+    #         if stdout: self.core_logger.debug(f"STDOUT: {stdout}")
+    #         if stderr: self.core_logger.debug(f"STDERR: {stderr}")
+    
+
 
     def _download_bootstrap_status(self):
         """
         Downloaded file will be stored locally for future reference.  
-
         :return: True if bootstrap file downloaded, False otherwise. 
         :rtype: Boolean # or maybe just the entire json?
         """
@@ -882,7 +890,6 @@ class Core():
     def get_mfuser_private_key(self, force=True):
         """
         Returns the mfuser private key. Default setting of force will always download the most recent file from the meas node.
-
         :param force: If downloaded file already exists locally, it will not be downloaded unless force is True. The downloaded file will be stored locally for future reference. 
         :return: True if file is found, false otherwise. 
         :rtype: Boolean
@@ -899,7 +906,6 @@ class Core():
     def _download_mfuser_private_key(self):
         """
         Downloaded file will be stored locally for future reference.  
-
         :return: True if key file downloaded, False otherwise. 
         :rtype: Boolean
         """
@@ -947,7 +953,6 @@ class Core():
         """
         Download the log file for the given service and method.
         Downloaded file will be stored locally for future reference. 
-        
         :param service: The name of the service.
         :type service: String 
         :param method: The method name such as create, update, info, start, stop, remove.
