@@ -245,7 +245,7 @@ class Core():
     def grafana_tunnel_local_port(self):
         """
         If a tunnel is used for grafana, this value must be set for the port.
-        Returns: 
+          Returns: 
             String: port number
         """
         return self._grafana_tunnel_local_port
