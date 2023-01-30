@@ -1,18 +1,13 @@
 #! /bin/bash
 
 echo "Has the version in mflib/__init__py been correctly increased?"
-read -p "WARNING: this script DELETES all files in dist and docs/build/html directories. Do you want to continue? Type Y or y:  " -n 1 -r 
+read -p "WARNING: this script DELETES all files in dist directory. Do you want to continue? Type Y or y:  " -n 1 -r 
 echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
 
     echo "***** Removing older dist files... *****"
     rm dist/mflib*
-    echo "***** Removing older html doc files... *****"
-    rm -rf docs/build/html
-    echo ""
-    echo "***** Building HTML documentation files... *****"
-    sphinx-build -b html docs/source/ docs/build/html
     echo ""
     echo "***** Building mflib package dist tar file. *****"
     python setup.py sdist
