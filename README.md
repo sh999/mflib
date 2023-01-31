@@ -25,6 +25,7 @@ cd mflib
 pip install --user .
 ```
 ## Building & Deploying
+Update version information by editing `mflib_version.py`
 ### Spinx Documentation
 This package is documented using sphinx. The `source` directories are already created and populated with reStructuredText ( .rst ) files. The `build` directories are deleted and/or are not included in the repository,
 
@@ -46,10 +47,14 @@ sudo apt install latexmk
 Run the bash script to create the MFLIB.pdf documentation. MFLIB.pdf will be placed in the root directory of the repository.
 `./create_pdf_doc.sh`
 #### Building Distribution Package
+Commit & push all changes to repo eg. mflib_version & MFLib.pdf etc.
+Merge into main branch.
+Create Release tag with version included in mflib_version.py
+Ensure you are on the new release.
 
 To build python package for PyPi run  
 `python setup.py sdist`
-#### Uploading to PyPI
+##### Uploading to PyPI
 First test the package by uploading to test.pypi.org then test the install.
 `twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
 Once install is good, upload to PiPy  
