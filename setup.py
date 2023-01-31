@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 from setuptools import setup, find_packages
-from mflib import __VERSION__
+from mflib.mflib_version import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -31,8 +31,8 @@ with open("requirements.txt", "r") as fh:
     requirements = fh.read()
 
 setup(
-    name="mflib",
-    version=__VERSION__,
+    name="fabrictestbed-mflib",
+    version=__version__,
     author="Carpenter, Song, Pinyi, Hussam",
     author_email="",
     description="FABRIC Measurement Framework Python Client Library",

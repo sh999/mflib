@@ -34,12 +34,12 @@ import ipywidgets as widgets
 from IPython.display import display
 from fabrictestbed_extensions.fablib.fablib import fablib
 from fabrictestbed_extensions.fablib.fablib import FablibManager as fablib_manager
-from mflib import mflib
+from mflib.mflib import MFLib
 # For testing
 #from mflib import mflib
 
-class mfvis(mflib):
-    mfvis_sanity_version = "2.02"
+class MFVis(MFLib):
+    mfvis_class_version = "2.02"
     meas_net_info = {}
     
     def __init__(self, slice_name="", local_storage_directory="/tmp/mflib"):

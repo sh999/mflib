@@ -14,7 +14,10 @@ sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 project = 'MFLib'
 copyright = '2023, Fabric UKY Team'
 author = 'Fabric UKY Team'
-release = '0.0.0'
+
+import mflib
+
+release = mflib.__version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

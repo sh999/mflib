@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022 FABRIC Testbed
+# Copyright (c) 2023 FABRIC Testbed
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,8 +45,12 @@ from mflib.core import Core
 
 
 class MFLib(Core):
+    """
+    MFLib allows for adding and controlling the MeasurementFramework in a Fabric experiementers slice.
 
-    mflib_sanity_version = "1.0.23"
+    """
+
+    mflib_class_version = "1.0.30"
 
     def set_mflib_logger(self):
         """
@@ -153,10 +157,18 @@ class MFLib(Core):
 
     def init(self,slice_name):
         """
-        Sets up the mflib object to ensure slice can be monitored.  Slice must already have a measurement node.
-        :param slice_name: The name of the slice.
-        :rtype: String
+        Sets up the slice to ensure it can be monitored. Sets up basic software on Measurement Node and experiment nodes.
+        Slice must already have a Measurement Node. 
+        See log file for details of init output.
+
+        Args:
+            slice_name (str): The name of the slice to be monitored.    
+        Returns:
+            Bool: False if no Measure Node found or a init process fails. True otherwise.
+
         """
+
+        
         print(f'Inititializing slice "{slice_name}" for MeasurementFramework.')
         
         
@@ -403,7 +415,7 @@ class MFLib(Core):
                 else:
                     print("mfuser installations Failed")
                     self.mflib_logger.error("Mfuser installs Failed.")
-                    return 
+                    return False
             
 
 
@@ -419,7 +431,16 @@ class MFLib(Core):
                 self.mflib_logger.info(f"ipv6_4_nat: {nat_set_results}")
                 self._update_bootstrap("ipv6_4_nat", nat_set_results)
 
-
+            #######################
+            # Set the measurement node
+            # in the hosts files 
+            #######################
+            if "hosts_set" in bss and bss["hosts_set"] == "ok":
+                print("Hosts already set.")
+                self.mflib_logger.info("Hosts already set.")
+            else:
+                self._set_all_hosts_file()
+                self._update_bootstrap("hosts_set","ok")
 
             #######################
             # Clone mf repo 
@@ -474,12 +495,17 @@ class MFLib(Core):
             self._update_bootstrap("status", "ready")
             print("Inititialization Done.")
             self.mflib_logger.info("Inititialization Done.")
+            return True
 
 
 
-
-# intend this to be overidden
     def instrumentize(self):
+        """
+        Instrumentize the slice. This is a convenience method that sets up & starts the monitoring of the slice. Sets up Prometheus, ELK & Grafana.
+
+        Returns:
+            dict   : The output from each phase of instrumetizing.
+        """
         self.mflib_logger.info(f"Instrumentizing {self.slice_name}")
         self.mflib_logger.info("Setting up Prometheus.")
         print("Setting up Prometheus...")
@@ -511,6 +537,12 @@ class MFLib(Core):
 
 
     def _make_hosts_ini_file(self, set_ip=False):
+        """
+        Creates hosts.ini files needed by various services on the measurement node.
+        Optionally sets the ip interfaces for the measurement network
+        Args:
+            set_ip (bool, optional): Optionally sets the the measurement network interfaces. Defaults to False.
+        """
         hosts = []                    
         num=1
         base = "10.0.0."
@@ -528,6 +560,7 @@ class MFLib(Core):
                         self.mflib_logger.info(f"setting interface ip {ip}")
                         interface.set_ip(ip = ip, cidr = "24")
                     #hosts.append("{0} ansible_host={1} hostname={1} ansible_ssh_user={2} node_exporter_listen_ip={1} node_exporter_username={3} node_exporter_password={3} snmp_community_string={4} grafana_admin_password={3} fabric_prometheus_ht_user={3} fabric_prometheus_ht_password={3}".format(node.get_name(), ip ,"mfuser","fabric","not-in-use"))
+                    #hosts.append("{0} ansible_host={1} hostname={1} ansible_ssh_user={2} node_exporter_listen_ip={1}".format(node.get_name(), ip ,"mfuser"))
                     hosts.append("{0} ansible_host={1} hostname={1} ansible_ssh_user={2} node_exporter_listen_ip={1} ansible_ssh_common_args='-o StrictHostKeyChecking=no'".format(node.get_name(), ip ,"mfuser"))
                     num+=1
 
@@ -576,11 +609,6 @@ class MFLib(Core):
         stdout, stderr = self.meas_node.execute("sudo cp promhosts.ini /home/mfuser/services/common/hosts.ini")
         stdout, stderr = self.meas_node.execute("sudo chown mfuser:mfuser /home/mfuser/services/common/hosts.ini")
         
-        # These should be deprecated? Use the common file?
-        # create the promhosts.ini file
-        stdout, stderr = self.meas_node.execute("sudo mv promhosts.ini /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini")
-        stdout, stderr = self.meas_node.execute("sudo chown mfuser:mfuser /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini")
-        
         # Upload the elkhosts.ini file.
         self.meas_node.upload_file(local_elk_hosts_filename,"elkhosts.ini")
 
@@ -595,7 +623,6 @@ class MFLib(Core):
         """
         Downloads hosts.ini file and returns file text.
         Downloaded hosts.ini file will be stored locally for future reference.  
-
         :param service: The name of the service.
         :type service: String 
         :param method: The method name such as create, update, info, start, stop, remove.
@@ -625,6 +652,12 @@ class MFLib(Core):
 # IPV6 to IPV4 only sites fix
 # note: should set bootstrap status file when making these 2 calls, status should be set, restored, not needed.
     def set_DNS_all_nodes(self):
+        """
+        Sets DNS for nodes to allow them to access ipv4 networks.
+
+        Returns:
+            string: "set" if DNS set, "not needed" otherwise.
+        """
         # Check if we need to
         if(self.meas_node.validIPAddress(self.meas_node.get_management_ip())=="IPv6"):
             for node in self.slice.get_nodes():
@@ -634,6 +667,12 @@ class MFLib(Core):
             return "not needed"
 
     def restore_DNS_all_nodes(self):
+        """
+        Restores the DNS to default if previously set. See set_DNS_all_nodes.
+
+        Returns:
+            string: "restored" if restored, "not needed" if not needed
+        """
         # Check if we need to
         if(self.meas_node.validIPAddress(self.meas_node.get_management_ip())=="IPv6"):
             for node in self.slice.get_nodes():
@@ -643,18 +682,44 @@ class MFLib(Core):
             return "not needed"
 
     def set_DNS(self,node):
+        """
+        Sets the DNS on IPv6 only nodes to enable access to IPv4 sites.
+        """
         if(node.validIPAddress(node.get_management_ip())=="IPv6"):
+            # needed to fix sudo unable to resolve error
+            node.execute('sudo echo -n "127.0.0.1 " | sudo cat - /etc/hostname  | sudo tee -a /etc/hosts')
+
             node.execute("""
             printf 'nameserver 2a00:1098:2c::1\nnameserver 2a01:4f8:c2c:123f::1\nnameserver 2a01:4f9:c010:3f02::1' > resolv.new;
             sudo mv /etc/resolv.conf /etc/resolv.old;
             sudo mv resolv.new /etc/resolv.conf;
             """)
             #Needed for fedora
+            # Check if eth0 exists to prevent errors. TODO check if this is still needed or check if os is fedora instead.
+            if os.path.exists(os.path.join("sys", "class", "net", "eth0")):
+                node.execute("""
+                    sudo resolvectl dns eth0 2a00:1098:2c::1;
+                    sudo resolvectl dns eth0 2a01:4f8:c2c:123f::1;
+                    sudo resolvectl dns eth0 2a01:4f9:c010:3f02::1;
+                """)
+
+    def restore_DNS(self,node):
+        if(node.validIPAddress(node.get_management_ip())=="IPv6"):
             node.execute("""
-                sudo resolvectl dns eth0 2a00:1098:2c::1;
-                sudo resolvectl dns eth0 2a01:4f8:c2c:123f::1;
-                sudo
-                resolvectl dns eth0 2a01:4f9:c010:3f02::1;
+                sudo mv /etc/resolv.old /etc/resolv.conf;
             """)
-            # needed to fix sudo unable to resolve error
-            node.execute('sudo echo -n "127.0.0.1 " | sudo cat - /etc/hostname  | sudo tee -a /etc/hosts')
+            #Needed for fedora
+            # Check if eth0 exists to prevent errors. TODO check if this is still needed or check if os is fedora instead.
+            if os.path.exists(os.path.join("sys", "class", "net", "eth0")):
+                node.execute("""
+                    resolvectl revert eth0;
+                """)
+
+    def _set_all_hosts_file(self):
+        for node in self.slice.get_nodes():
+            self._set_hosts_file(node)
+
+    def _set_hosts_file(self, node):
+        self.meas_node_ip
+        # Set the Measurement node ip
+        node.execute(f'sudo echo -n "{self.meas_node_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts')
