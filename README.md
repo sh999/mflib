@@ -10,12 +10,11 @@ For more information about FABRIC vist [fabric-testbed.net](https://fabric-testb
 [FABRIC Knowledge Base](https://learn.fabric-testbed.net/) 
 
 ### MFLib Python Package Documentation
-See [MFLib.pdf](https://github.com/fabric-testbed/mflib/MFLib.pdf) for package documentation.
+See [MFLib.pdf](https://github.com/fabric-testbed/mflib/blob/main/MFLib.pdf) for package documentation.
 
 ## MFLib Installation
-S
 
-MFLib may be installed using pip. 
+MFLib may be installed using PIP and PyPI [fabrictestbed-mflib](https://pypi.org/fabrictestbed-mflib)
 `pip install --user fabrictestbed-mflib`
 
 ### Installing via Source Code
@@ -25,9 +24,7 @@ git clone https://github.com/fabric-testbed/mflib.git
 cd mflib
 pip install --user .
 ```
-
 ## Building & Deploying
-
 ### Spinx Documentation
 This package is documented using sphinx. The `source` directories are already created and populated with reStructuredText ( .rst ) files. The `build` directories are deleted and/or are not included in the repository,
 
@@ -57,7 +54,3 @@ First test the package by uploading to test.pypi.org then test the install.
 `twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
 Once install is good, upload to PiPy  
 `twine upload dist/*`
-
-
-
-
