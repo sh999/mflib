@@ -1,1 +1,1 @@
-__VERSION__ = "0.0.0"
+from mflib.mflib_version import __version__ 
