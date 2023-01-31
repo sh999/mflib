@@ -17,7 +17,7 @@ author = 'Fabric UKY Team'
 
 import mflib
 
-release = mflib.__VERSION__
+release = mflib.__version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
