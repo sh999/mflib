@@ -10,10 +10,10 @@ For more information about FABRIC vist [fabric-testbed.net](https://fabric-testb
 [FABRIC Knowledge Base](https://learn.fabric-testbed.net/) 
 
 ### MFLib Python Package Documentation
-See [MFLIB.pdf](https://github.com/fabric-testbed/mflib/mflib.pdf) for package documentation.
+See [MFLib.pdf](https://github.com/fabric-testbed/mflib/MFLib.pdf) for package documentation.
 
 ## MFLib Installation
-### Installing via PyPI & PIP 
+S
 
 MFLib may be installed using pip. 
 `pip install --user fabrictestbed-mflib`

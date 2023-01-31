@@ -12,7 +12,7 @@ then
     echo "***** Building PDF documentation files... *****"
     make -C docs/ latexpdf
     echo "Copying PDF to main directory."
-    cp docs/build/latex/mflib.pdf MFLIB.pdf
+    cp docs/build/latex/mflib.pdf MFLib.pdf
     echo "***** Done *****"
 else
     echo "Aborting, nothing done."
