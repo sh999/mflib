@@ -30,7 +30,7 @@ pip install --user .
 ## Building & Deploying
 
 ### Spinx Documentation
-This package is documented using sphinx. The `source` directories are already created and populated with reStructuredText ( .rst ) files. The `build` directories are deleted and/or are not included in the repository,
+This package is documented using sphinx. The `source` directories are already created and populated with reStructuredText ( .rst ) files. The `build` directories are deleted and/or are not included in the repository.
 
 API documentation can also be found at https://fabrictestbed-mflib.readthedocs.io/.
 
