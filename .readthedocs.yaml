@@ -19,7 +19,11 @@ sphinx:
 # requirements and package requirements, it seems.
 python:
   install:
+    # - method: pip
+    #   path: .
+    #   extra_requirements:
+    #     - docs
     - method: pip
-      path: .
-      extra_requirements:
-        - docs
+      package: furo
+    - method: pip
+      package: myst-parser
