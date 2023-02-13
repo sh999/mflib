@@ -1,4 +1,7 @@
 # MFLIB Measurement Framework Library
+
+[![Documentation Status](https://readthedocs.org/projects/fabrictestbed-mflib/badge/?version=latest)](https://fabrictestbed-mflib.readthedocs.io/en/latest/?badge=latest)
+
 Welcome to the FABRIC Measurement Framework Library. MFLib makes it easy to install monitoring systems to a FABRIC experimenter's slice. The monitoring system makes extensive use of industry standards such as Prometheus, Grafana, Elastic Search and Kibana while adding customized monitoring tools and dashboards for quick setup and visualization.
 
 ## Documentation Resources
@@ -25,13 +28,15 @@ cd mflib
 pip install --user .
 ```
 ## Building & Deploying
+
 ### Spinx Documentation
 This package is documented using sphinx. The `source` directories are already created and populated with reStructuredText ( .rst ) files. The `build` directories are deleted and/or are not included in the repository,
 
+API documentation can also be found at https://fabrictestbed-mflib.readthedocs.io/.
+
 #### Build HTML Documents
 
-Install the extra packages required to build API docs: (sphinx, furo
-theme, and myst-parser for parsing markdown files):
+Install the extra packages required to build API docs: (sphinx, furo theme, and myst-parser for parsing markdown files):
 
 ```
 pip install -r docs/requirements.txt
