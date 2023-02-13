@@ -34,7 +34,7 @@ Install the extra packages required to build API docs: (sphinx, furo
 theme, and myst-parser for parsing markdown files):
 
 ```console
-$ pip install -r docs/requirements.txt
+pip install -r docs/requirements.txt
 ```
 
 Build the documentation by running the following command from the root directory of the repo.
