@@ -36,8 +36,7 @@ API documentation can also be found at https://fabrictestbed-mflib.readthedocs.i
 
 #### Build HTML Documents
 
-Install the extra packages required to build API docs: (sphinx, furo
-theme, and myst-parser for parsing markdown files):
+Install the extra packages required to build API docs: (sphinx, furo theme, and myst-parser for parsing markdown files):
 
 ```
 pip install -r docs/requirements.txt
