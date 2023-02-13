@@ -33,7 +33,7 @@ This package is documented using sphinx. The `source` directories are already cr
 Install the extra packages required to build API docs: (sphinx, furo
 theme, and myst-parser for parsing markdown files):
 
-```console
+```
 pip install -r docs/requirements.txt
 ```
 
