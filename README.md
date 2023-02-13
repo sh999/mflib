@@ -1,4 +1,7 @@
 # MFLIB Measurement Framework Library
+
+[![api-docs-badge]][api-docs]
+
 Welcome to the FABRIC Measurement Framework Library. MFLib makes it easy to install monitoring systems to a FABRIC experimenter's slice. The monitoring system makes extensive use of industry standards such as Prometheus, Grafana, Elastic Search and Kibana while adding customized monitoring tools and dashboards for quick setup and visualization.
 
 ## Documentation Resources
@@ -25,8 +28,11 @@ cd mflib
 pip install --user .
 ```
 ## Building & Deploying
+
 ### Spinx Documentation
 This package is documented using sphinx. The `source` directories are already created and populated with reStructuredText ( .rst ) files. The `build` directories are deleted and/or are not included in the repository,
+
+API documentation can also be found at https://fabrictestbed-mflib.readthedocs.io/.
 
 #### Build HTML Documents
 
@@ -58,3 +64,9 @@ First test the package by uploading to test.pypi.org then test the install.
 `twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
 Once install is good, upload to PiPy  
 `twine upload dist/*`
+
+
+<!-- links -->
+
+[api-docs]: https://fabrictestbed-mflib.readthedocs.io/en/latest/?badge=latest
+[api-docs-badge]: https://readthedocs.org/projects/fabrictestbed-mflib/badge/?version=latest (Documentation Status)
