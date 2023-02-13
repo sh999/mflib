@@ -24,6 +24,6 @@ python:
     #   extra_requirements:
     #     - docs
     - method: pip
-      package: furo
+      path: furo
     - method: pip
-      package: myst-parser
+      path: myst-parser
