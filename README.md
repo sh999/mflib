@@ -29,10 +29,14 @@ pip install --user .
 This package is documented using sphinx. The `source` directories are already created and populated with reStructuredText ( .rst ) files. The `build` directories are deleted and/or are not included in the repository,
 
 #### Build HTML Documents
-The sphinx theme furo is used. This may need to be installed using  
-`pip install furo`   
-To parse the markdown files (README.md) sphinx needs myst-parser.   
-`pip install myst-parser`   
+
+Install the extra packages required to build API docs: (sphinx, furo
+theme, and myst-parser for parsing markdown files):
+
+```
+pip install -r docs/requirements.txt
+```
+
 Build the documentation by running the following command from the root directory of the repo.
 `sphinx-build -b html docs/source/ docs/build/html`  
 The completed documentation may be accessed by clicking on `/docs/build/html/index.html`
