@@ -102,9 +102,11 @@ class MFLib(Core):
             self.mflib_logger.addHandler(log_handler)
 
           
-    # This is a temporary method needed untill modify slice ability is avaialble. 
-    @staticmethod 
-    def addMeasNode(slice, cores=4, ram=16, disk=500):
+    # This is a temporary method needed untill modify slice ability is avaialble.
+    @staticmethod
+    def addMeasNode(
+        slice, cores=4, ram=16, disk=500, network_type="FABNetv4", site="NCSA"
+    ):
         """
         Adds Measurement node and measurement network to unsubmitted slice object.
 
@@ -113,37 +115,46 @@ class MFLib(Core):
             cores (int, optional): Cores for measurement node. Defaults to 4 cores.
             ram (int, optional): _description_. Defaults to 16 GB ram.
             disk (int, optional): _description_. Defaults to 500 GB disk.
+            network_type (string, optional): _description_. Defaults to FABNetv4.
+            site (string, optional): _description_. Defaults to NCSA.
         """
-
-        interfaces = []
-        sites = []
-        num = 1
-        
+        interfaces = {}
         for node in slice.get_nodes():
-            interfaces.append(node.add_component(model='NIC_Basic', name=("Meas_Nic"+str(num))).get_interfaces()[0])
-            sites.append(node.get_site())
-            num += 1
-        site = max(set(sites), key = sites.count)
-        
-        meas = slice.add_node(name="_meas_node", site=site)
+            this_site = node.get_site()
+            this_nodename = node.geni_name()
+            this_interface = node.add_component(
+                model="NIC_Basic", name=(f"meas_nic_{this_nodename}_{this_site}")
+            ).get_interfaces()[0]
+            (interfaces[this_site]).append(this_interface)
 
-        # if not cores: 
-        #     cores = meas.default_cores 
-
-        # if not ram: 
-        #     ram = meas.default_ram 
-
-        # if not disk: 
-        #     disk = 500
+        meas_nodename = '_meas_node'
+        meas_image = 'default_ubuntu_20'
+        meas = slice.add_node(name=meas_nodename, site=site)
 
         meas.set_capacities(cores=cores, ram=ram, disk=disk)
-        meas.set_image("default_ubuntu_20")
-        interfaces.append(meas.add_component(model='NIC_Basic', name="Meas_Nic").get_interfaces()[0])
-        meas_net = slice.add_l2network(name="_meas_net", interfaces=interfaces)
-    
-        # This logging will appear in the fablib log.
-        logging.info(f'Added Meas node & network to slice "{slice.get_name()}" topography. Cores: {cores}  RAM: {ram}GB Disk {disk}GB')
+        meas.set_image(meas_image)
 
+        if (network_type == 'FABNETv4'):
+            meas_interface = meas.add_component(
+                model="NIC_Basic", name=(f"meas_nic_{meas_nodename}_{site}")
+            ).get_interfaces()[0]
+            (interfaces[site]).append(meas_interface)
+
+            for site in interfaces.keys():
+                slice.add_l3network(name=f"l3_meas_net_{site}", interfaces=interfaces[site])
+        elif (network_type == L2 ):
+            # Change site for meas node to a site that is not used by any node
+            # Add N nics/interfaces to meas node where N is the number of nodes in the slice excluding meas node
+            # Create N L2 Networks with two NIC for each network (node_meas_nic,meas_node_nic)
+            logging.info(f"Failed to add {network_type} Meas Network")    
+            return false
+        else:
+            logging.info(f"Unknown {network_type} Network type")    
+            return false
+        # This logging will appear in the fablib log.
+        logging.info(
+            f'Added Meas node & network to slice "{slice.get_name()}" topology. Cores: {cores}  RAM: {ram}GB Disk {disk}GB'
+        )
     def __init__(self, slice_name="",local_storage_directory="/tmp/mflib"):
         """
         Constructor.
@@ -534,38 +545,40 @@ class MFLib(Core):
         
         return all_data
 
-
-
     def _make_hosts_ini_file(self, set_ip=False):
-        """
-        Creates hosts.ini files needed by various services on the measurement node.
-        Optionally sets the ip interfaces for the measurement network
-        Args:
-            set_ip (bool, optional): Optionally sets the the measurement network interfaces. Defaults to False.
-        """
-        hosts = []                    
-        num=1
+        hosts = []
+        num = 1
         base = "10.0.0."
         hosts = []
         if set_ip:
             print("Setting measurement nic IPs")
             self.mflib_logger.info("Setting measurement nic IPs")
-        for node in self.slice.get_nodes():
-            for interface in node.get_interfaces():
-                if ("Meas_Nic" in interface.get_name()):
-                    ip = base + str(num)
-                   
-                    if set_ip:
-                        print(f"setting interface ip {ip}")
-                        self.mflib_logger.info(f"setting interface ip {ip}")
-                        interface.set_ip(ip = ip, cidr = "24")
-                    #hosts.append("{0} ansible_host={1} hostname={1} ansible_ssh_user={2} node_exporter_listen_ip={1} node_exporter_username={3} node_exporter_password={3} snmp_community_string={4} grafana_admin_password={3} fabric_prometheus_ht_user={3} fabric_prometheus_ht_password={3}".format(node.get_name(), ip ,"mfuser","fabric","not-in-use"))
-                    #hosts.append("{0} ansible_host={1} hostname={1} ansible_ssh_user={2} node_exporter_listen_ip={1}".format(node.get_name(), ip ,"mfuser"))
-                    hosts.append("{0} ansible_host={1} hostname={1} ansible_ssh_user={2} node_exporter_listen_ip={1} ansible_ssh_common_args='-o StrictHostKeyChecking=no'".format(node.get_name(), ip ,"mfuser"))
-                    num+=1
+        networks = self.slice.get_networks()
+        
+        for network in networks:
+            network_name = network.get_name()
+            network_type = network.get_type()
+            if (network_type == 'FABNetv4' and network_name.startswith('l3_meas_net_')):
+                network_site = network.get_site()
+                network_subnet = network.get_subnet()
+                interfaces = network.get_interfaces()
+                available_ips = network.get_available_ips()
+                subnets_by_site[network_site] = network_subnet
+                for interface in interfaces:
+                    ip_addr = available_ips.pop(0)
+                    interface.ip_addr_add(addr=ip_addr, subnet=network_subnet)
+                    node = interface.get_node()
+                    other_networks = Networks
+                    other_networks.remove(network)
+                    for other_network in other_networks:
+                        if (other_network.get_type() == 'FABNetv4' and other_network.get_name().startswith('l3_meas_net_')):
+                            node.ip_route_add(subnet=other_network.get_subnet(), gateway=network.get_gateway())
+                    hosts.append(
+                        "{0} ansible_host={1} hostname={1} ansible_ssh_user={2} node_exporter_listen_ip={1} ansible_ssh_common_args='-o StrictHostKeyChecking=no'".format(
+                            node.get_name(), ip, "mfuser"
+                        )
+                    )
 
-
-        # print("Creating Ansible Hosts File\n")
         # Prometheus e_Elk
         hosts_txt = ""
         e_hosts_txt = ""
@@ -574,50 +587,43 @@ class MFLib(Core):
         e_experiment_nodes = "[workers]\n"
         for host in hosts:
             if "_meas_node" in host:
-
                 hosts_txt += "[Meas_Node]\n"
-                hosts_txt += host + '\n\n'
+                hosts_txt += host + "\n\n"
 
                 e_hosts_txt += "[elk]\n"
-                e_hosts_txt += host + '\n\n'
+                e_hosts_txt += host + "\n\n"
 
-            else: # It is an experimenters node
-                experiment_nodes += host + '\n'
-                e_experiment_nodes += host + '\n'
+            else:  # It is an experimenters node
+                experiment_nodes += host + "\n"
+                e_experiment_nodes += host + "\n"
 
         hosts_txt += experiment_nodes
         e_hosts_txt += e_experiment_nodes
 
-        local_prom_hosts_filename = os.path.join(self.local_slice_directory, "promhosts.ini")
-        local_elk_hosts_filename = os.path.join(self.local_slice_directory, "elkhosts.ini")
+        local_prom_hosts_filename = os.path.join(
+            self.local_slice_directory, "promhosts.ini"
+        )
+        local_elk_hosts_filename = os.path.join(
+            self.local_slice_directory, "elkhosts.ini"
+        )
 
-        with open(local_prom_hosts_filename, 'w') as f:
+        with open(local_prom_hosts_filename, "w") as f:
             f.write(hosts_txt)
-        with open(local_elk_hosts_filename, 'w') as f:
+        with open(local_elk_hosts_filename, "w") as f:
             f.write(e_hosts_txt)
-
+        remote_dir = '/tmp/'
         # Upload the files to the meas node and move to correct locations
-
-        # Upload Prom hosts
-        self.meas_node.upload_file(local_prom_hosts_filename,"promhosts.ini")
+        self.meas_node.upload_directory(self.local_slice_directory,remote_dir)
 
         # create a common version of hosts.ini for all to access
         self.mflib_logger.info("Setting up common hosts.ini file to measurement node.")
-        stdout, stderr = self.meas_node.execute("sudo mkdir -p /home/mfuser/services/common")
-        stdout, stderr = self.meas_node.execute("sudo chown mfuser:mfuser /home/mfuser/services")
-        stdout, stderr = self.meas_node.execute("sudo chown mfuser:mfuser /home/mfuser/services/common")
-        stdout, stderr = self.meas_node.execute("sudo cp promhosts.ini /home/mfuser/services/common/hosts.ini")
-        stdout, stderr = self.meas_node.execute("sudo chown mfuser:mfuser /home/mfuser/services/common/hosts.ini")
-        
-        # Upload the elkhosts.ini file.
-        self.meas_node.upload_file(local_elk_hosts_filename,"elkhosts.ini")
-
-        # create the elk.ini file
-        stdout, stderr = self.meas_node.execute("sudo mv elkhosts.ini /home/mfuser/mf_git/elkhosts.ini")
-        stdout, stderr = self.meas_node.execute("sudo chown mfuser:mfuser /home/mfuser/mf_git/elkhosts.ini")
-        
-               
- 
+        stdout, stderr = self.meas_node.execute(
+            "sudo mkdir -p /home/mfuser/services/common;\
+            sudo chown -R mfuser:mfuser /home/mfuser/services /home/mfuser/mf_git;\
+            sudo cp "+remote_dir+"promhosts.ini /home/mfuser/services/common/hosts.ini;\
+            sudo mv "+remote_dir+"promhosts.ini /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini;\
+            sudo mv "+remotedir+"elkhosts.ini /home/mfuser/mf_git/elkhosts.ini"
+        )
 
     def download_common_hosts(self):
         """
