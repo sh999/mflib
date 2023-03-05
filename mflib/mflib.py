@@ -121,7 +121,9 @@ class MFLib(Core):
         interfaces = {}
         for node in slice.get_nodes():
             this_site = node.get_site()
-            this_nodename = node.geni_name()
+            if this_site not in interfaces.keys():
+                interfaces[this_site] = []
+            this_nodename = node.get_name()
             this_interface = node.add_component(
                 model="NIC_Basic", name=(f"meas_nic_{this_nodename}_{this_site}")
             ).get_interfaces()[0]
@@ -133,8 +135,9 @@ class MFLib(Core):
 
         meas.set_capacities(cores=cores, ram=ram, disk=disk)
         meas.set_image(meas_image)
-
-        if (network_type == 'FABNETv4'):
+        if site not in interfaces.keys():
+                interfaces[site] = []
+        if (network_type == 'FABNetv4'):
             meas_interface = meas.add_component(
                 model="NIC_Basic", name=(f"meas_nic_{meas_nodename}_{site}")
             ).get_interfaces()[0]
@@ -142,15 +145,15 @@ class MFLib(Core):
 
             for site in interfaces.keys():
                 slice.add_l3network(name=f"l3_meas_net_{site}", interfaces=interfaces[site])
-        elif (network_type == L2 ):
+        elif (network_type == 'L2' ):
             # Change site for meas node to a site that is not used by any node
             # Add N nics/interfaces to meas node where N is the number of nodes in the slice excluding meas node
             # Create N L2 Networks with two NIC for each network (node_meas_nic,meas_node_nic)
             logging.info(f"Failed to add {network_type} Meas Network")    
-            return false
+            return False
         else:
             logging.info(f"Unknown {network_type} Network type")    
-            return false
+            return False
         # This logging will appear in the fablib log.
         logging.info(
             f'Added Meas node & network to slice "{slice.get_name()}" topology. Cores: {cores}  RAM: {ram}GB Disk {disk}GB'
