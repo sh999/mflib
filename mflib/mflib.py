@@ -686,7 +686,7 @@ Experiment_Nodes
         remote_dir = "/tmp"
         # Upload the files to the meas node and move to correct locations
         self.meas_node.upload_file(
-            self.local_prom_hosts_filename, f"{remote_dir}/{hosts_ini}"
+            local_prom_hosts_filename, f"{remote_dir}/{hosts_ini}"
         )
 
         # create a common version of hosts.ini for all to access
