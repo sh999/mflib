@@ -612,6 +612,7 @@ class MFLib(Core):
                 for interface in interfaces:
                     ip_addr = available_ips.pop(0)
                     interface.ip_addr_add(addr=ip_addr, subnet=network_subnet)
+                    interface.ip_link_up()
                     node = interface.get_node()
                     if node.get_reservation_id() == meas_node.get_reservation_id():
                         for other_network in networks:
