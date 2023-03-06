@@ -676,17 +676,11 @@ class MFLib(Core):
         # create a common version of hosts.ini for all to access
         self.mflib_logger.info("Setting up common hosts.ini file to measurement node.")
         stdout, stderr = self.meas_node.execute(
-            "sudo mkdir -p /home/mfuser/services/common;\
-            sudo chown -R mfuser:mfuser /home/mfuser/services /home/mfuser/mf_git;\
-            sudo cp "
-            + remote_dir
-            + "promhosts.ini /home/mfuser/services/common/hosts.ini;\
-            sudo mv "
-            + remote_dir
-            + "promhosts.ini /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini;\
-            sudo mv "
-            + remote_dir
-            + "elkhosts.ini /home/mfuser/mf_git/elkhosts.ini"
+            f"sudo mkdir -p /home/mfuser/services/common;"
+            f"sudo chown -R mfuser:mfuser /home/mfuser/services /home/mfuser/mf_git;"
+            f"sudo cp {remote_dir}/{self.slice_name}/promhosts.ini /home/mfuser/services/common/hosts.ini;"
+            f"sudo mv {remote_dir}/{self.slice_name}/promhosts.ini /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini;"
+            f"sudo mv {remote_dir}/{self.slice_name}/elkhosts.ini /home/mfuser/mf_git/elkhosts.ini"
         )
 
     def download_common_hosts(self):
