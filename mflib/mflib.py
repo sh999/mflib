@@ -587,16 +587,13 @@ class MFLib(Core):
 
     def _make_hosts_ini_file(self, set_ip=False):
         hosts = []
-        num = 1
-        base = "10.0.0."
-        hosts = []
+        mfuser = "mfuser"
         if set_ip:
             print("Setting measurement nic IPs")
             self.mflib_logger.info("Setting measurement nic IPs")
 
         meas_nodename = "_meas_node"
         meas_node = self.slice.get_node(name=meas_nodename)
-        #        meas_nic = meas_node.list_interfaces(filter_function=lambda s: s['node'].startswith(f'meas_nic_{meas_nodename}_'))[0]
         meas_site = meas_node.get_site()
         meas_network = self.slice.get_network(name=f"l3_meas_net_{meas_site}")
         meas_net_subnet = meas_network.get_subnet()
@@ -605,23 +602,25 @@ class MFLib(Core):
         for network in networks:
             network_name = network.get_name()
             network_type = network.get_type()
-            if network_type == "FABNetv4" and network_name.startswith("l3_meas_net_"):
+            if str(network_type) == "FABNetv4" and network_name.startswith(
+                "l3_meas_net_"
+            ):
                 network_site = network.get_site()
                 network_subnet = network.get_subnet()
                 interfaces = network.get_interfaces()
                 available_ips = network.get_available_ips()
-                subnets_by_site[network_site] = network_subnet
                 for interface in interfaces:
                     ip_addr = available_ips.pop(0)
                     interface.ip_addr_add(addr=ip_addr, subnet=network_subnet)
                     node = interface.get_node()
-                    other_networks = Networks
-                    other_networks.remove(network)
-                    if node == meas_node:
-                        for other_network in other_networks:
-                            if (
-                                other_network.get_type() == "FABNetv4"
-                                and other_network.get_name().startswith("l3_meas_net_")
+                    if node.get_reservation_id() == meas_node.get_reservation_id():
+                        for other_network in networks:
+                            if other_network.get_name() == network_name:
+                                continue
+                            if str(
+                                other_network.get_type()
+                            ) == "FABNetv4" and other_network.get_name().startswith(
+                                "l3_meas_net_"
                             ):
                                 node.ip_route_add(
                                     subnet=other_network.get_subnet(),
@@ -632,14 +631,25 @@ class MFLib(Core):
                             subnet=meas_net_subnet, gateway=network.get_gateway()
                         )
                     hosts.append(
-                        "{0} ansible_host={1} hostname={1} ansible_ssh_user={2} node_exporter_listen_ip={1} ansible_ssh_common_args='-o StrictHostKeyChecking=no'".format(
-                            node.get_name(), ip, "mfuser"
-                        )
+                        f"{node.get_name()} "
+                        f"ansible_host={ip_addr} "
+                        f"hostname={ip_addr} "
+                        f"ansible_ssh_user={mfuser} "
+                        f"node_exporter_listen_ip={ip_addr} "
+                        f"ansible_ssh_common_args='-o StrictHostKeyChecking=no'"
                     )
 
         # Prometheus e_Elk
         hosts_txt = ""
-        e_hosts_txt = ""
+        # e_hosts_txt = ""
+        hosts_tail = f"""
+
+[elk:children]
+Meas_Node
+
+[workers:children]
+Experiment_Nodes
+"""
 
         experiment_nodes = "[Experiment_Nodes]\n"
         e_experiment_nodes = "[workers]\n"
@@ -656,31 +666,37 @@ class MFLib(Core):
                 e_experiment_nodes += host + "\n"
 
         hosts_txt += experiment_nodes
-        e_hosts_txt += e_experiment_nodes
+        hosts_txt += hosts_tail
+        hosts_ini = "hosts.ini"
+        # e_hosts_txt += e_experiment_nodes
 
-        local_prom_hosts_filename = os.path.join(
-            self.local_slice_directory, "promhosts.ini"
-        )
-        local_elk_hosts_filename = os.path.join(
-            self.local_slice_directory, "elkhosts.ini"
-        )
+        local_prom_hosts_filename = os.path.join(self.local_slice_directory, hosts_ini)
+
+        # local_prom_hosts_filename = os.path.join(
+        #     self.local_slice_directory, "promhosts.ini"
+        # )
+        # local_elk_hosts_filename = os.path.join(
+        #     self.local_slice_directory, "elkhosts.ini"
+        # )
 
         with open(local_prom_hosts_filename, "w") as f:
             f.write(hosts_txt)
-        with open(local_elk_hosts_filename, "w") as f:
-            f.write(e_hosts_txt)
-        remote_dir = "/tmp/"
+        # with open(local_elk_hosts_filename, "w") as f:
+        #     f.write(e_hosts_txt)
+        remote_dir = "/tmp"
         # Upload the files to the meas node and move to correct locations
-        self.meas_node.upload_directory(self.local_slice_directory, remote_dir)
+        self.meas_node.upload_file(
+            self.local_prom_hosts_filename, f"{remote_dir}/{hosts_ini}"
+        )
 
         # create a common version of hosts.ini for all to access
         self.mflib_logger.info("Setting up common hosts.ini file to measurement node.")
         stdout, stderr = self.meas_node.execute(
             f"sudo mkdir -p /home/mfuser/services/common;"
             f"sudo chown -R mfuser:mfuser /home/mfuser/services /home/mfuser/mf_git;"
-            f"sudo cp {remote_dir}/{self.slice_name}/promhosts.ini /home/mfuser/services/common/hosts.ini;"
-            f"sudo mv {remote_dir}/{self.slice_name}/promhosts.ini /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini;"
-            f"sudo mv {remote_dir}/{self.slice_name}/elkhosts.ini /home/mfuser/mf_git/elkhosts.ini"
+            f"sudo mv {remote_dir}/{hosts_ini} /home/mfuser/services/common/hosts.ini;"
+            # f"sudo ln -s {remote_dir}/{self.slice_name}/promhosts.ini /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini;"
+            f"sudo ln -s /home/mfuser/services/common/hosts.ini /home/mfuser/mf_git/elkhosts.ini"
         )
 
     def download_common_hosts(self):
