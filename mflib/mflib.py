@@ -685,7 +685,7 @@ class MFLib(Core):
             + remote_dir
             + "promhosts.ini /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini;\
             sudo mv "
-            + remotedir
+            + remote_dir
             + "elkhosts.ini /home/mfuser/mf_git/elkhosts.ini"
         )
 
