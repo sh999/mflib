@@ -658,12 +658,12 @@ Experiment_Nodes
                 hosts_txt += "[Meas_Node]\n"
                 hosts_txt += host + "\n\n"
 
-                e_hosts_txt += "[elk]\n"
-                e_hosts_txt += host + "\n\n"
+                # e_hosts_txt += "[elk]\n"
+                # e_hosts_txt += host + "\n\n"
 
             else:  # It is an experimenters node
                 experiment_nodes += host + "\n"
-                e_experiment_nodes += host + "\n"
+                # e_experiment_nodes += host + "\n"
 
         hosts_txt += experiment_nodes
         hosts_txt += hosts_tail
