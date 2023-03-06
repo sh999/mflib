@@ -595,11 +595,12 @@ class MFLib(Core):
             self.mflib_logger.info("Setting measurement nic IPs")
 
         meas_nodename = "_meas_node"
-        meas_node = slice.get_node(name=meas_nodename)
+        meas_node = self.slice.get_node(name=meas_nodename)
         #        meas_nic = meas_node.list_interfaces(filter_function=lambda s: s['node'].startswith(f'meas_nic_{meas_nodename}_'))[0]
         meas_site = meas_node.get_site()
-        meas_network = slice.get_network(name=f"l3_meas_net_{meas_site}")
+        meas_network = self.slice.get_network(name=f"l3_meas_net_{meas_site}")
         meas_net_subnet = meas_network.get_subnet()
+        networks = self.slice.get_networks()
 
         for network in networks:
             network_name = network.get_name()
