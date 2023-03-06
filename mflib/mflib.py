@@ -695,9 +695,9 @@ Experiment_Nodes
         stdout, stderr = self.meas_node.execute(
             f"sudo mkdir -p /home/mfuser/services/common;"
             f"sudo mv {remote_dir}/{hosts_ini} /home/mfuser/services/common/hosts.ini;"
+            f"sudo ln -s /home/mfuser/services/common/hosts.ini /home/mfuser/mf_git/elkhosts.ini"
             f"sudo chown -R mfuser:mfuser /home/mfuser/services /home/mfuser/mf_git;"
             # f"sudo ln -s {remote_dir}/{self.slice_name}/promhosts.ini /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini;"
-            f"sudo ln -s /home/mfuser/services/common/hosts.ini /home/mfuser/mf_git/elkhosts.ini"
         )
 
     def download_common_hosts(self):
