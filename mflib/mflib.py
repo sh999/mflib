@@ -164,11 +164,15 @@ class MFLib(Core):
             f'Added Meas node & network to slice "{slice.get_name()}" topology. Cores: {cores}  RAM: {ram}GB Disk {disk}GB'
         )
 
-    def __init__(self, slice_name="", local_storage_directory="/tmp/mflib"):
+    def __init__(
+        self, slice_name="", local_storage_directory="/tmp/mflib", mf_repo_branch="main"
+    ):
         """
         Constructor.
         """
-        super().__init__(local_storage_directory=local_storage_directory)
+        super().__init__(
+            local_storage_directory=local_storage_directory, mf_repo_branch="main"
+        )
         self.mflib_log_handler = None
 
         if slice_name:
@@ -695,7 +699,7 @@ Experiment_Nodes
         stdout, stderr = self.meas_node.execute(
             f"sudo mkdir -p /home/mfuser/services/common;"
             f"sudo mv {remote_dir}/{hosts_ini} /home/mfuser/services/common/hosts.ini;"
-            f"sudo ln -s /home/mfuser/services/common/hosts.ini /home/mfuser/mf_git/elkhosts.ini"
+            f"sudo ln -s /home/mfuser/services/common/hosts.ini /home/mfuser/mf_git/elkhosts.ini;"
             f"sudo chown -R mfuser:mfuser /home/mfuser/services /home/mfuser/mf_git;"
             # f"sudo ln -s {remote_dir}/{self.slice_name}/promhosts.ini /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini;"
         )
