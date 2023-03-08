@@ -51,7 +51,7 @@ class MFLib(Core):
 
     """
 
-    mflib_class_version = "1.0.30"
+    mflib_class_version = "1.0.31"
 
     def set_mflib_logger(self):
         """
@@ -168,7 +168,11 @@ class MFLib(Core):
         self, slice_name="", local_storage_directory="/tmp/mflib", mf_repo_branch="main"
     ):
         """
-        Constructor.
+        Constructor
+        Args:
+            slice (fablib.slice): Slice object already set with experiment topology.
+            local_storage_directory (str, optional): Directory where local data will be stored. Defaults to "/tmp/mflib".
+            mf_repo_branch (str, optional): git branch name to pull MeasurementFranework code from. Defaults to "main".
         """
         super().__init__(
             local_storage_directory=local_storage_directory,
@@ -663,32 +667,18 @@ Experiment_Nodes
             if "_meas_node" in host:
                 hosts_txt += "[Meas_Node]\n"
                 hosts_txt += host + "\n\n"
-
-                # e_hosts_txt += "[elk]\n"
-                # e_hosts_txt += host + "\n\n"
-
             else:  # It is an experimenters node
                 experiment_nodes += host + "\n"
-                # e_experiment_nodes += host + "\n"
 
         hosts_txt += experiment_nodes
         hosts_txt += hosts_tail
         hosts_ini = "hosts.ini"
-        # e_hosts_txt += e_experiment_nodes
 
         local_prom_hosts_filename = os.path.join(self.local_slice_directory, hosts_ini)
 
-        # local_prom_hosts_filename = os.path.join(
-        #     self.local_slice_directory, "promhosts.ini"
-        # )
-        # local_elk_hosts_filename = os.path.join(
-        #     self.local_slice_directory, "elkhosts.ini"
-        # )
-
         with open(local_prom_hosts_filename, "w") as f:
             f.write(hosts_txt)
-        # with open(local_elk_hosts_filename, "w") as f:
-        #     f.write(e_hosts_txt)
+
         remote_dir = "/tmp"
         # Upload the files to the meas node and move to correct locations
         self.meas_node.upload_file(
@@ -700,9 +690,7 @@ Experiment_Nodes
         stdout, stderr = self.meas_node.execute(
             f"sudo mkdir -p /home/mfuser/services/common;"
             f"sudo mv {remote_dir}/{hosts_ini} /home/mfuser/services/common/hosts.ini;"
-            f"sudo ln -s /home/mfuser/services/common/hosts.ini /home/mfuser/mf_git/elkhosts.ini;"
             f"sudo chown -R mfuser:mfuser /home/mfuser/services /home/mfuser/mf_git;"
-            # f"sudo ln -s {remote_dir}/{self.slice_name}/promhosts.ini /home/mfuser/mf_git/instrumentize/ansible/fabric_experiment_instramentize/promhosts.ini;"
         )
 
     def download_common_hosts(self):
