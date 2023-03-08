@@ -171,7 +171,8 @@ class MFLib(Core):
         Constructor.
         """
         super().__init__(
-            local_storage_directory=local_storage_directory, mf_repo_branch="main"
+            local_storage_directory=local_storage_directory,
+            mf_repo_branch=mf_repo_branch,
         )
         self.mflib_log_handler = None
 
