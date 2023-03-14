@@ -500,17 +500,6 @@ class MFLib(Core):
                 self._update_bootstrap("ipv6_4_nat", nat_set_results)
 
             #######################
-            # Set the measurement node
-            # in the hosts files
-            #######################
-            if "hosts_set" in bss and bss["hosts_set"] == "ok":
-                print("Hosts already set.")
-                self.mflib_logger.info("Hosts already set.")
-            else:
-                self._set_all_hosts_file()
-                self._update_bootstrap("hosts_set", "ok")
-
-            #######################
             # Clone mf repo
             #######################
             if "repo_cloned" in bss and bss["repo_cloned"] == "ok":
@@ -532,6 +521,17 @@ class MFLib(Core):
                 # if True:
                 self._make_hosts_ini_file(set_ip=True)
                 self._update_bootstrap("meas_network", "ok")
+                
+            #######################
+            # Set the measurement node
+            # in the hosts files
+            #######################
+            if "hosts_set" in bss and bss["hosts_set"] == "ok":
+                print("Hosts already set.")
+                self.mflib_logger.info("Hosts already set.")
+            else:
+                self._set_all_hosts_file()
+                self._update_bootstrap("hosts_set", "ok")
 
             #######################
             # Run Bootstrap script
@@ -807,6 +807,11 @@ Experiment_Nodes
     def _set_hosts_file(self, node):
         self.meas_node_ip
         # Set the Measurement node ip
-        node.execute(
-            f'sudo echo -n "{self.meas_node_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts'
-        )
+        # This uses the management ip, not what we want.
+        # node.execute(f'sudo echo -n "{self.meas_node_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts')
+        meas_node_meas_net_ip = None
+        for interface in self.meas_node.get_interfaces():
+            if ("_meas_node-meas_nic" in interface.get_name()):
+                meas_node_meas_net_ip = interface.get_ip_addr()
+        if meas_node_meas_net_ip:
+            node.execute(f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts')
