@@ -702,7 +702,7 @@ class Core:
                 fa = self.meas_node.upload_file(
                     local_file_path, remote_tmp_file_path
                 )  # retry=3, retry_interval=10, username="mfuser", private_key="mfuser_private_key")
-                cmd = f"sudo mv {remote_tmp_file_path} {final_remote_file_path};  sudo chown mfuser:mfuser {final_remote_file_path}; sudo rm {remote_tmp_file_path}"
+                cmd = f"sudo mv {remote_tmp_file_path} {final_remote_file_path};  sudo chown mfuser:mfuser {final_remote_file_path};"
 
                 stdout, stderr = self.meas_node.execute(cmd)
 
