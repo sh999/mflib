@@ -342,8 +342,6 @@ class Core:
             tunnel_cmd = f"ssh -L {local_port}:localhost:{remote_port} -F {ssh_config} -i {private_key_file} {slice_username}@{meas_node_ip}"
             return tunnel_cmd
 
-    # Repo branch made class varible so it can be set before creating object
-    #    mf_repo_branch = "main"
     """
     The git branch to be used for cloning the MeasurementFramework branch to the Measusrement Node.
     """
@@ -354,6 +352,7 @@ class Core:
 
         Args:
             local_storage_directory (str, optional): Directory where local data will be stored. Defaults to "/tmp/mflib".
+            mf_repo_branch (str, optional): git branch name to pull MeasurementFranework code from. Defaults to "main".
         """
         # super().__init__()
 
