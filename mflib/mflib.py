@@ -521,7 +521,7 @@ class MFLib(Core):
                 # if True:
                 self._make_hosts_ini_file(set_ip=True)
                 self._update_bootstrap("meas_network", "ok")
-                
+
             #######################
             # Set the measurement node
             # in the hosts files
@@ -734,9 +734,14 @@ Experiment_Nodes
             string: "set" if DNS set, "not needed" otherwise.
         """
         # Check if we need to
-        if self.meas_node.validIPAddress(self.meas_node.get_management_ip()) == "IPv6":
-            for node in self.slice.get_nodes():
+        # if self.meas_node.validIPAddress(self.meas_node.get_management_ip()) == "IPv6":
+        nat64_set = False
+        for node in self.slice.get_nodes():
+            if node.validIPAddress(node.get_management_ip()) == "IPv6":
                 self.set_DNS(node)
+                nat64_set = True
+
+        if nat64_set:
             return "set"
         else:
             return "not needed"
@@ -749,9 +754,12 @@ Experiment_Nodes
             string: "restored" if restored, "not needed" if not needed
         """
         # Check if we need to
-        if self.meas_node.validIPAddress(self.meas_node.get_management_ip()) == "IPv6":
-            for node in self.slice.get_nodes():
+        nat64_restored = False
+        for node in self.slice.get_nodes():
+            if node.validIPAddress(node.get_management_ip()) == "IPv6":
                 self.restore_DNS(node)
+                nat64_restored = True
+        if nat64_restored:
             return "restored"
         else:
             return "not needed"
@@ -811,7 +819,9 @@ Experiment_Nodes
         # node.execute(f'sudo echo -n "{self.meas_node_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts')
         meas_node_meas_net_ip = None
         for interface in self.meas_node.get_interfaces():
-            if ("_meas_node-meas_nic" in interface.get_name()):
+            if "_meas_node-meas_nic" in interface.get_name():
                 meas_node_meas_net_ip = interface.get_ip_addr()
         if meas_node_meas_net_ip:
-            node.execute(f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts')
+            node.execute(
+                f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts'
+            )
