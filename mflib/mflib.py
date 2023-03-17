@@ -813,7 +813,7 @@ Experiment_Nodes
             self._set_hosts_file(node)
 
     def _set_hosts_file(self, node):
-        self.meas_node_ip
+        # self.meas_node_ip
         # Set the Measurement node ip
         # This uses the management ip, not what we want.
         # node.execute(f'sudo echo -n "{self.meas_node_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts')
