@@ -770,7 +770,7 @@ Experiment_Nodes
         """
         if node.validIPAddress(node.get_management_ip()) == "IPv6":
             # needed to fix sudo unable to resolve error
-            stdout,stderr = node.execute(
+            stdout, stderr = node.execute(
                 'sudo echo -n "127.0.0.1 " | sudo cat - /etc/hostname  | sudo tee -a /etc/hosts'
             )
             self.mflib_logger.info(f"STDOUT: {stdout}")
@@ -824,10 +824,9 @@ Experiment_Nodes
             if "_meas_node-meas_nic" in interface.get_name():
                 meas_node_meas_net_ip = interface.get_ip_addr()
         if meas_node_meas_net_ip:
-            stdout,stderr = node.execute(
+            stdout, stderr = node.execute(
                 f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts'
             )
             self.mflib_logger.info(f"STDOUT: {stdout}")
             if stderr is not None:
-                print stderr
                 self.mflib_logger.error(f"STDERR: {stderr}")
