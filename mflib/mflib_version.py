@@ -1,5 +1,5 @@
 
-# release level is a alpha, b beta, rc candidate or f final
+# release level is a alpha, b beta, rc candidate, dev development, post post,  or f final
 # (major, minor, micro, release level, release build)
 __version_info__ = [0, 0, 0, "b", 1]
 
