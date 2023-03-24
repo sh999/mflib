@@ -1031,7 +1031,7 @@ class Core():
 
         # Ensure remote file path will be within the service directory.
         if ".." in filename or ".." in service:
-            print("Remote file must be within the service directory.")
+            print("Error: Remote file must be within the service directory.")
             return {"success": False}
 
         # TODO: Make sure a failure from this function will still return to user
@@ -1061,7 +1061,7 @@ class Core():
             return {"success": False}
 
         # Call the internal upload service file function
-        self.upload_service_files(service, files)
+        self._upload_service_files(service, files)
 
 
 
@@ -1083,4 +1083,4 @@ class Core():
             return {"success": False}
 
         # Call the internal upload service directory function
-        self.upload_service_files(service, local_directory_path)
+        self._upload_service_directory(service, local_directory_path)
