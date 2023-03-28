@@ -417,7 +417,7 @@ class Core():
 
     def info(self, service, data=None):
         """
-        Gets inormation from an existing service. Strictly gets information, does not change how the service is running.
+        Gets information from an existing service. Strictly gets information, does not change how the service is running.
         :param service: The name of the service.
         :type service: String
         :param data: Data to be passed to a JSON file place in the service's meas node directory.
@@ -459,6 +459,105 @@ class Core():
             self.core_logger.info(f"Run remove for {service}")
             return self._run_on_meas_node(service, "remove")
 
+
+    def download_log_file(self, service, method):
+        """
+        Download the log file for the given service and method.
+        Downloaded file will be stored locally for future reference.
+        :param service: The name of the service.
+        :type service: String
+        :param method: The method name such as create, update, info, start, stop, remove.
+        :type method: String
+        :return: Writes file to local storage and returns text of the log file.
+        :rtype: String
+        """
+        try:
+            local_file_path = os.path.join( self.local_slice_directory, f"{method}.log")
+            remote_file_path =  os.path.join("/","home","mfuser","services", service, "log", f"{method}.log")
+            #print(local_file_path)
+            #print(remote_file_path)
+            file_attributes = self.meas_node.download_file(local_file_path, remote_file_path, retry=1) #, retry=3, retry_interval=10): # note retry is really tries
+            #print(file_attributes)
+
+            with open(local_file_path) as f:
+                log_text = f.read()
+                return local_file_path, log_text
+
+        except Exception as e:
+            print("Service log download has failed.")
+            print(f"Downloading service log file has Failed. It may not exist: {e}")
+            return "",""
+
+
+
+    def download_service_file(self, service, filename, local_file_path=""):
+        """
+        Downloads service files from the meas node and places them in the local storage directory.
+        Denies the user from downloading files anywhere outside the service directory
+        :param service: Service name
+        :type service: String
+        :param filename: The filename to download from the meas node.
+        :param local_file_path: Optional filename for local saved file.
+        :type local_file_path: String
+        """
+
+        # Ensure remote file path will be within the service directory.
+        if ".." in filename or ".." in service:
+            print("Error: Remote file must be within the service directory.")
+            return {"success": False}
+
+        # TODO: Make sure a failure from this function will still return to user
+        # Call the internal download service file function
+        self._download_service_file(service, filename, local_file_path)
+
+
+
+    def upload_service_files(self, service, files):
+        """
+        Uploads the given local files to the given service's directory on the meas node.
+        Denies the user from uploading files anywhere outside the service directory
+        :param service: Service name for which the files are being upload to the meas node.
+        :type service: String
+        :param files: List of file paths on local machine.
+        :type files: List
+        :raises: Exception: for misc failures....
+        :return: ?
+        :rtype: ?
+        """
+        # TODO: Could be useful to create a services tuple so that we could instead
+        # TODO: check the service string matches a valid service
+        # TODO: i.e: function like valid_service(service)
+        # Ensure remote file path will be within the service directory.
+        if ".." in service:
+            print("Remote file must be within the service directory.")
+            return {"success": False}
+
+        # Call the internal upload service file function
+        # TODO: Check errors and return results
+        self._upload_service_files(service, files)
+
+
+
+    def upload_service_directory(self, service, local_directory_path):
+        """
+        Uploads the given local directory to the given service's directory on the meas node.
+        :param service: Service name for which the files are being upload to the meas node.
+        :type service: String
+        :param directory: List of file paths on local machine.
+        :type directory: String
+        :raises: Exception: for misc failures....
+        :return: ?
+        :rtype: ?
+        """
+
+        # Ensure remote file path will be within the service directory.
+        if ".." in service:
+            print("Remote file must be within the service directory.")
+            return {"success": False}
+
+        # Call the internal upload service directory function
+        # TODO: Check errors and return results
+        self._upload_service_directory(service, local_directory_path)
 
 
 # Utility Methods
@@ -984,103 +1083,16 @@ class Core():
         except Exception as e:
             print("Bootstrap upload has failed.")
             print(f"Fail: {e}")
-        return False  
-    
-       
-    
-    def download_log_file(self, service, method):
+        return False
+
+
+    def _get_service_list(self):
         """
-        Download the log file for the given service and method.
-        Downloaded file will be stored locally for future reference. 
-        :param service: The name of the service.
-        :type service: String 
-        :param method: The method name such as create, update, info, start, stop, remove.
-        :type method: String
-        :return: Writes file to local storage and returns text of the log file.
-        :rtype: String
+        Gets a list of all currently existing services
+        :return: all currently existing services
+        :rtype: List
         """
-        try:
-            local_file_path = os.path.join( self.local_slice_directory, f"{method}.log")
-            remote_file_path =  os.path.join("/","home","mfuser","services", service, "log", f"{method}.log")
-            #print(local_file_path)
-            #print(remote_file_path)
-            file_attributes = self.meas_node.download_file(local_file_path, remote_file_path, retry=1) #, retry=3, retry_interval=10): # note retry is really tries
-            #print(file_attributes)
-            
-            with open(local_file_path) as f:
-                log_text = f.read()
-                return local_file_path, log_text
-
-        except Exception as e:
-            print("Service log download has failed.")
-            print(f"Downloading service log file has Failed. It may not exist: {e}")
-            return "",""
-
-
-
-    def download_service_file(self, service, filename, local_file_path=""):
-        """
-        Downloads service files from the meas node and places them in the local storage directory.
-        Denies the user from downloading files anywhere outside the service directory
-        :param service: Service name
-        :type service: String
-        :param filename: The filename to download from the meas node.
-        :param local_file_path: Optional filename for local saved file.
-        :type local_file_path: String
-        """
-
-        # Ensure remote file path will be within the service directory.
-        if ".." in filename or ".." in service:
-            print("Error: Remote file must be within the service directory.")
-            return {"success": False}
-
-        # TODO: Make sure a failure from this function will still return to user
-        # Call the internal download service file function
-        self._download_service_file(service, filename, local_file_path)
-
-
-
-    def upload_service_files(self, service, files):
-        """
-        Uploads the given local files to the given service's directory on the meas node.
-        Denies the user from uploading files anywhere outside the service directory
-        :param service: Service name for which the files are being upload to the meas node.
-        :type service: String
-        :param files: List of file paths on local machine.
-        :type files: List
-        :raises: Exception: for misc failures....
-        :return: ?
-        :rtype: ?
-        """
-        # TODO: Could be useful to create a services tuple so that we could instead
-        # TODO: check the service string matches a valid service
-        # TODO: i.e: function like valid_service(service)
-        # Ensure remote file path will be within the service directory.
-        if ".." in service:
-            print("Remote file must be within the service directory.")
-            return {"success": False}
-
-        # Call the internal upload service file function
-        self._upload_service_files(service, files)
-
-
-
-    def upload_service_directory(self, service, local_directory_path):
-        """
-        Uploads the given local directory to the given service's directory on the meas node.
-        :param service: Service name for which the files are being upload to the meas node.
-        :type service: String
-        :param directory: List of file paths on local machine.
-        :type directory: String
-        :raises: Exception: for misc failures....
-        :return: ?
-        :rtype: ?
-        """
-
-        # Ensure remote file path will be within the service directory.
-        if ".." in service:
-            print("Remote file must be within the service directory.")
-            return {"success": False}
-
-        # Call the internal upload service directory function
-        self._upload_service_directory(service, local_directory_path)
+        data = {}
+        data["get"] = ["service_list"]
+        self.core_logger.info(f"Run _get_service_list()")
+        return self._run_on_meas_node("overview", "info", data)["services"]
