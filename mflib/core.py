@@ -423,6 +423,11 @@ class Core():
         :param data: Data to be passed to a JSON file place in the service's meas node directory.
         :type data: JSON serializable object.
         """
+        # Ensure service inputted is valid
+        if service not in self._get_service_list():
+            print("You must specify a valid service")
+            return {"success": False}
+
         self.core_logger.info(f"Run info for {service}")
         self.core_logger.debug(f"Data is {data}.")
         return self._run_on_meas_node(service, "info", data)
@@ -471,6 +476,11 @@ class Core():
         :return: Writes file to local storage and returns text of the log file.
         :rtype: String
         """
+        # Ensure service inputted is valid
+        if service not in self._get_service_list():
+            print("You must specify a valid service")
+            return {"success": False}
+
         try:
             local_file_path = os.path.join( self.local_slice_directory, f"{method}.log")
             remote_file_path =  os.path.join("/","home","mfuser","services", service, "log", f"{method}.log")
@@ -500,9 +510,13 @@ class Core():
         :param local_file_path: Optional filename for local saved file.
         :type local_file_path: String
         """
+        # Ensure service inputted is valid
+        if service not in self._get_service_list():
+            print("You must specify a valid service")
+            return {"success": False}
 
         # Ensure remote file path will be within the service directory.
-        if ".." in filename or ".." in service:
+        if ".." in filename:
             print("Error: Remote file must be within the service directory.")
             return {"success": False}
 
@@ -524,17 +538,16 @@ class Core():
         :return: ?
         :rtype: ?
         """
-        # TODO: Could be useful to create a services tuple so that we could instead
-        # TODO: check the service string matches a valid service
-        # TODO: i.e: function like valid_service(service)
-        # Ensure remote file path will be within the service directory.
-        if ".." in service:
-            print("Remote file must be within the service directory.")
+
+        # Ensure service inputted is valid
+        if service not in self._get_service_list():
+            print("You must specify a valid service")
             return {"success": False}
 
         # Call the internal upload service file function
         # TODO: Check errors and return results
         self._upload_service_files(service, files)
+
 
 
 
@@ -550,17 +563,32 @@ class Core():
         :rtype: ?
         """
 
-        # Ensure remote file path will be within the service directory.
-        if ".." in service:
-            print("Remote file must be within the service directory.")
+        # Ensure service inputted is valid
+        if service not in self._get_service_list():
+            print("You must specify a valid service")
             return {"success": False}
 
         # Call the internal upload service directory function
         # TODO: Check errors and return results
         self._upload_service_directory(service, local_directory_path)
 
+    def get_mfuser_private_key(self, force=True):
+        """
+        Returns the mfuser private key. Default setting of force will always download the most recent file from the meas node.
+        :param force: If downloaded file already exists locally, it will not be downloaded unless force is True. The downloaded file will be stored locally for future reference.
+        :return: True if file is found, false otherwise.
+        :rtype: Boolean
+        """
+        if force or not os.path.exists(self.local_mfuser_private_key_filename):
+            self._download_mfuser_private_key()
 
-# Utility Methods
+        if os.path.exists(self.local_mfuser_private_key_filename):
+            return True
+        else:
+            return False
+
+
+        # Utility Methods
 
     def _upload_mfuser_keys(self, private_filename=None, public_filename=None):
         """
@@ -1023,22 +1051,7 @@ class Core():
             return False
         return False  
     
-    
-    
-    def get_mfuser_private_key(self, force=True):
-        """
-        Returns the mfuser private key. Default setting of force will always download the most recent file from the meas node.
-        :param force: If downloaded file already exists locally, it will not be downloaded unless force is True. The downloaded file will be stored locally for future reference. 
-        :return: True if file is found, false otherwise. 
-        :rtype: Boolean
-        """
-        if force or not os.path.exists(self.local_mfuser_private_key_filename):
-            self._download_mfuser_private_key()
 
-        if os.path.exists(self.local_mfuser_private_key_filename):
-                return True 
-        else:
-            return False 
 
 
     def _download_mfuser_private_key(self):
