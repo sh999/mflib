@@ -36,26 +36,20 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from os import chmod
 
-# import string
-# import random
-
-
 import logging
 
 from mflib.core import Core
 
-
 class MFLib(Core):
     """
-    MFLib allows for adding and controlling the MeasurementFramework in a Fabric experiementers slice.
-
+        MFLib allows for adding and controlling the MeasurementFramework in a Fabric experiementers slice.
     """
 
-    mflib_class_version = "1.0.31"
+    mflib_class_version = "1.0.32"
 
     def set_mflib_logger(self):
         """
-        Sets up the mflib logging file. Filename is created from the self.logging_filename.
+        Sets up the mflib logging file. The filename is created from the self.logging_filename.
         Note that the self.logging_filename will be set with the slice when the slice name is set.
 
         This method uses the logging filename inherited from Core.
@@ -111,7 +105,7 @@ class MFLib(Core):
         slice, cores=4, ram=16, disk=500, network_type="FABNetv4", site="NCSA"
     ):
         """
-        Adds Measurement node and measurement network to unsubmitted slice object.
+        Adds Measurement node and measurement network to an unsubmitted slice object.
 
         Args:
             slice (fablib.slice): Slice object already set with experiment topology.
@@ -697,12 +691,6 @@ Experiment_Nodes
         """
         Downloads hosts.ini file and returns file text.
         Downloaded hosts.ini file will be stored locally for future reference.
-        :param service: The name of the service.
-        :type service: String
-        :param method: The method name such as create, update, info, start, stop, remove.
-        :type method: String
-        :return: Writes file to local storage and returns text of the log file.
-        :rtype: String
         """
         try:
             local_file_path = self.common_hosts_file

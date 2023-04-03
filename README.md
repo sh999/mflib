@@ -13,12 +13,18 @@ For more information about FABRIC vist [fabric-testbed.net](https://fabric-testb
 [FABRIC Knowledge Base](https://learn.fabric-testbed.net/) 
 
 ### MFLib Python Package Documentation
-See [MFLib.pdf](https://github.com/fabric-testbed/mflib/blob/main/MFLib.pdf) for package documentation.
+Documentation for the package is presented in serveral different forms (and maybe include later in this document):
+* [ReadTheDocs](https://fabrictestbed-mflib.readthedocs.io/en/latest/)
+* [MFLib.pdf](https://github.com/fabric-testbed/mflib/blob/main/MFLib.pdf)
+* Or you may build the documentation from the source code. See Sphinx Documentation later in this document.
 
 ## MFLib Installation
 
-MFLib may be installed using PIP and PyPI [fabrictestbed-mflib](https://pypi.org/fabrictestbed-mflib)
-`pip install --user fabrictestbed-mflib`
+### Instaling via PIP
+MFLib may be installed using PIP and PyPI [fabrictestbed-mflib](https://pypi.org/project/fabrictestbed-mflib/)
+```
+pip install --user fabrictestbed-mflib
+```
 
 ### Installing via Source Code
 If you need a development version, clone the git repo, then use pip to install.
@@ -43,7 +49,9 @@ pip install -r docs/requirements.txt
 ```
 
 Build the documentation by running the following command from the root directory of the repo.
-`sphinx-build -b html docs/source/ docs/build/html`  
+```
+sphinx-build -b html docs/source/ docs/build/html
+```  
 The completed documentation may be accessed by clicking on `/docs/build/html/index.html`
 
 #### Build PDF Document
@@ -53,13 +61,31 @@ sudo apt install texlive-latex-extra
 sudo apt install latexmk
 ```
 Run the bash script to create the MFLIB.pdf documentation. MFLIB.pdf will be placed in the root directory of the repository.
-`./create_pdf_doc.sh`
-#### Building Distribution Package
+```
+./create_pdf_doc.sh
+```
+If error "! LaTeX Error: Unknown graphics extension: .svg." Just type enter to continue. 
 
+### Distribution Package
+
+MFLib package is created using [Flit](https://flit.pypa.io/en/stable/)
+Be sure to create and commit the PDF documentation to GitHub before building and publishing to PyPi. The MFLib.pdf is included in the distributition.
+```
+python3 -m pip install flit
+```
 To build python package for PyPi run  
-`python setup.py sdist`
+```
+flit build
+```
+
+
 #### Uploading to PyPI
+
 First test the package by uploading to test.pypi.org then test the install.
-`twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
+```
+flit publish --repository testpypi 
+```
 Once install is good, upload to PiPy  
-`twine upload dist/*`
+```
+flit publish --repository pypi 
+```
