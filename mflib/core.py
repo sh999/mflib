@@ -30,6 +30,7 @@ from fabrictestbed_extensions.fablib.fablib import fablib
 # For getting vars to make tunnel
 from fabrictestbed_extensions.fablib.fablib import FablibManager
 
+
 import string
 import random
 
@@ -61,7 +62,7 @@ class Core():
         self.core_logger = logging.getLogger(__name__)
         self.core_logger.propagate = False # needed?
         self.core_logger.setLevel(self.log_level)
-
+        
         formatter = logging.Formatter('%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %H:%M:%S %p')
 
         # Make sure log directory exists
@@ -82,7 +83,7 @@ class Core():
         Returns:
             String: The name of the slice.
         """
-        return self._slice_name
+        return self._slice_name 
 
     @slice_name.setter
     def slice_name( self, value ):
@@ -93,15 +94,15 @@ class Core():
             value (str): Name of the slice
         """
         # Set the slice name
-        self._slice_name = value
+        self._slice_name = value 
 
         # Create the local slice directory
         try:
             os.makedirs(self.local_slice_directory)
             os.makedirs(self.log_directory)
-
+           
         except FileExistsError:
-            pass
+            pass 
             # Don't care if the file already exists.
 
 
@@ -133,8 +134,8 @@ class Core():
             String: The full path to the log directory.
         """
         return os.path.join(self.local_slice_directory, "log")
-
-    @property
+        
+    @property 
     def bootstrap_status_file(self):
         """
         The full path to the local copy of the bootstrap status file.
@@ -144,7 +145,7 @@ class Core():
         """
         return os.path.join(self.local_slice_directory, "bootstrap_status.json")
 
-    @property
+    @property 
     def common_hosts_file(self):
         """
         The full path to a local copy of the hosts.ini file. 
@@ -152,9 +153,9 @@ class Core():
         Returns:
             String: The full path to a local copy of the hosts.ini file.
         """
-        return os.path.join(self.local_slice_directory, "hosts.ini")
+        return os.path.join(self.local_slice_directory, "hosts.ini")    
 
-    @property
+    @property 
     def local_mfuser_private_key_filename(self):
         """
         The local copy of the private ssh key for the mfuser account.
@@ -162,9 +163,9 @@ class Core():
         Returns:
             String: The local copy of the private ssh key for the mfuser account.
         """
-        return os.path.join(self.local_slice_directory, "mfuser_private_key")
+        return os.path.join(self.local_slice_directory, "mfuser_private_key")    
 
-    @property
+    @property 
     def local_mfuser_public_key_filename(self):
         """
         The local copy of the public ssh key for the mfuser account.
@@ -172,7 +173,7 @@ class Core():
         Returns:
             String: The local copy of the public ssh key for the mfuser account.
         """
-        return os.path.join(self.local_slice_directory, "mfuser_pubic_key")
+        return os.path.join(self.local_slice_directory, "mfuser_pubic_key")    
 
     @property
     def meas_node(self):
@@ -184,11 +185,11 @@ class Core():
 
         """
         if self._meas_node:
-            return self._meas_node
+            return self._meas_node 
         else:
             self._find_meas_node()
-            return self._meas_node
-
+            return self._meas_node 
+            
     @property
     def meas_node_ip(self):
         """
@@ -198,7 +199,7 @@ class Core():
             String: ip address
         """
         if self.meas_node:
-            return self._meas_node.get_management_ip()
+            return self._meas_node.get_management_ip() 
         else:
             return ""
 
@@ -211,7 +212,7 @@ class Core():
             String: username
         """
         if self.meas_node:
-            return self._meas_node.get_username()
+            return self._meas_node.get_username() 
         else:
             return ""
 
@@ -231,14 +232,14 @@ class Core():
             String: tunnel hostname
         """
         return self._tunnel_host
-
+        
     @tunnel_host.setter
     def tunnel_host(self, value):
         """ 
         Set to "localhost" if using tunnnel.
         """
         self._tunnel_host = value
-
+        
 
     @property
     def grafana_tunnel_local_port(self):
@@ -248,7 +249,7 @@ class Core():
             String: port number
         """
         return self._grafana_tunnel_local_port
-
+        
     @grafana_tunnel_local_port.setter
     def grafana_tunnel_local_port(self, value):
         """ 
@@ -262,14 +263,14 @@ class Core():
         """
         If a tunnel is used for Kibana, this value must be set for the port"""
         return self._kibana_tunnel_local_port
-
+        
     @kibana_tunnel_local_port.setter
     def kibana_tunnel_local_port(self, value):
         """ 
         Set to port_number if using tunnnel for Kibana.
         """
         self._kibana_tunnel_local_port = value
-
+                
     @property
     def grafana_tunnel(self):
         """
@@ -303,13 +304,13 @@ class Core():
         """
         slice_username = self.slice_username
         meas_node_ip = self.meas_node_ip
-
+        
         # User has setup an ssh config file
         extra_fm = FablibManager()
         errmsg = ""
         ssh_config = ""
         private_key_file = ""
-
+    
         extra_fm_vars = extra_fm.read_fabric_rc(extra_fm.default_fabric_rc)
         if extra_fm_vars:
             if "FABRIC_ALT_COPY_SSH_CONFIG" in extra_fm_vars:
@@ -321,14 +322,14 @@ class Core():
                 private_key_file = extra_fm_vars["FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE"]
             else:
                 errmsg += "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE not found in fabric_rc file. "
-
+            
         if errmsg:
-            self.core_logger.error(f"It appears you have not added alternate ssh config or slice key file locations to the fabric_rc file. {errmsg} ")
+            self.core_logger.error(f"It appears you have not added alternate ssh config or slice key file locations to the fabric_rc file. {errmsg} ") 
             return "It appears you have not added alternate ssh config or slice key file locations to the fabric_rc file. " + errmsg
         else:
             #return f'ssh -L 10010:localhost:443 -F {extra_fm_vars["FABRIC_ALT_SSH_CONFIG"]} -i {extra_fm_vars["FABRIC_ALT_SLICE_PRIVATE_KEY_FILE"]} {self.slice_username}@{self.meas_node_ip}'
             tunnel_cmd = f'ssh -L {local_port}:localhost:{remote_port} -F {ssh_config} -i {private_key_file} {slice_username}@{meas_node_ip}'
-            return tunnel_cmd
+            return tunnel_cmd 
 
 
 
@@ -340,7 +341,7 @@ class Core():
     The git branch to be used for cloning the MeasurementFramework branch to the Measusrement Node.
     """
 
-
+  
     def __init__(self, local_storage_directory="/tmp/mflib"):
         """
         Core constructor
@@ -364,7 +365,7 @@ class Core():
         self.log_filename = os.path.join(self.log_directory, "mflib_core.log")
         self.set_core_logger()
         self.core_logger.info("Creating mflib object.")
-
+        
         self.tunnel_host = "localhost"
         self.grafana_tunnel_local_port = "10010"
         self.kibana_tunnel_local_port = "10020"
@@ -373,7 +374,7 @@ class Core():
         # The slice object
         self.slice = None
         # The meas_node object
-        self._meas_node = None
+        self._meas_node = None 
 
         # The following are normally constant values
         # Name given to the meas node
@@ -452,7 +453,7 @@ class Core():
     #     """
     #     Deprecated?, use info instead?
     #     Returns predefined status info. Does not change the running of the service.
-    #     """
+    #     """ 
     #     for service in services:
     #         return self._run_on_meas_node(service, "status")
 
@@ -483,7 +484,7 @@ class Core():
             fa = self.meas_node.upload_file(local_file_path, remote_file_path) #, retry=3, retry_interval=10):
 
         except TypeError:
-            pass
+            pass 
             # TODO set file permissions on remote
             # This error is happening due to the file permmissions not being correctly set on the remote?
         except Exception as e:
@@ -495,7 +496,7 @@ class Core():
             remote_file_path = self.mfuser_public_key_filename
             fa = self.meas_node.upload_file(local_file_path, remote_file_path) #, retry=3, retry_interval=10):
         except TypeError:
-            pass
+            pass 
             self.core_logger.exception("Failed to upload mfuser public key to default user.")
             # TODO set file permissions on remote
             # This error is happening due to the file permmissions not being correctly set on the remote?   
@@ -512,7 +513,7 @@ class Core():
         self.meas_node.execute(cmd)
         cmd = f"chmod 600 {self.mfuser_private_key_filename}"
         self.meas_node.execute(cmd)
-
+        
     def _copy_mfuser_keys_to_mfuser_on_meas_node(self):
         """
         Copies mfuser keys from default location to mfuser .ssh folder and sets ownership & permissions.
@@ -520,7 +521,7 @@ class Core():
         try:
             cmd = f"sudo cp {self.mfuser_public_key_filename} /home/mfuser/.ssh/{self.mfuser_public_key_filename}; sudo chown mfuser:mfuser /home/mfuser/.ssh/{self.mfuser_public_key_filename}; sudo chmod 644 /home/mfuser/.ssh/{self.mfuser_public_key_filename}"
             stdout, stderr = self.meas_node.execute(cmd)
-
+        
             if stdout: self.core_logger.debug(f"STDOUT: {stdout}")
             if stderr: self.core_logger.debug(f"STDERR: {stderr}")
 
@@ -535,7 +536,7 @@ class Core():
             self.core_logger.exception("Failed to copy mfuser keys to meas node.")
             if stdout: self.core_logger.debug(f"STDOUT: {stdout}")
             if stderr: self.core_logger.debug(f"STDERR: {stderr}")
-            return False
+            return False 
         return True
 
 
@@ -547,7 +548,7 @@ class Core():
             private_filename=self.local_mfuser_private_key_filename
         if  public_filename is None:
             public_filename=self.local_mfuser_public_key_filename
-
+        
 
         try:
             local_file_path = private_filename
@@ -557,7 +558,7 @@ class Core():
             local_file_path = public_filename
             remote_file_path = self.mfuser_public_key_filename
             stdout, stderr = self.meas_node.download_file(local_file_path, remote_file_path) #, retry=3, retry_interval=10):
-
+            
         except Exception as e:
             print(f"Download mfuser Keys Failed: {e}")
             self.core_logger.exception("Failed to download mfuser keys.")
@@ -574,15 +575,15 @@ class Core():
         try:
             for node in self.slice.get_nodes():
                 if node.get_name() == self.measurement_node_name:
-                    self._meas_node = node
-                    return True
+                    self._meas_node = node 
+                    return True 
         except Exception as e:
             print(f"Find Measure Node Failed: {e}")
             self.core_logger.exception("Failed to find Measure Node")
         self._meas_node = None
         return False
 
-
+        
     def _run_on_meas_node(self, service, command, data=None, files=[]):
         """
         Runs a command on the meas node.
@@ -609,7 +610,7 @@ class Core():
         # run command 
         return self._run_service_command(service, command )
 
-
+        
     def _upload_service_data(self, service, data):
         """
         Uploads the json serializable object data to a json file on the meas node.
@@ -618,8 +619,8 @@ class Core():
         :param data: A JSON serializable dictionary 
         :type data: dict
         """
-
-
+        
+            
         letters = string.ascii_letters
         try:
             # Create temp file for serialized json data
@@ -628,24 +629,24 @@ class Core():
             with open(local_file_path, 'w') as datafile:
                 #print("dumping data")
                 json.dump(data, datafile)
-
+            
             # Create remote filenames
             final_remote_file_path = os.path.join(self.services_directory, service, "data", "data.json")
             remote_tmp_file_path = os.path.join("/tmp", randdataname)
-
+    
             # upload file
             fa = self.meas_node.upload_file(local_file_path, remote_tmp_file_path)
-
+            
             # mv file to final location
             cmd = f"sudo mv {remote_tmp_file_path} {final_remote_file_path};  sudo chown mfuser:mfuser {final_remote_file_path}"
-
+            
             stdout, stderr = self.meas_node.execute(cmd)
-
+            
             # Remove local temp file.
             os.remove(local_file_path)
-
+            
         except Exception as e:
-            print(f"Service Data Upload Failed: {e}")
+            print(f"Service Data Upload Failed: {e}")  
             self.core_logger.exception("Upload service data failed")
             if stdout: self.core_logger.debug(f"STDOUT: {stdout}")
             if stderr: self.core_logger.debug(f"STDERR: {stderr}")
@@ -670,13 +671,13 @@ class Core():
             for file in files:
                 # Set src/dst filenames
                 # file is local path
-                local_file_path = file
+                local_file_path = file 
                 filename = os.path.basename(file)
                 final_remote_file_path = os.path.join(self.services_directory, service, "files", filename)
 
                 randfilename = "mf_file_" + "".join(random.choice(letters) for i in range(10))
                 remote_tmp_file_path = os.path.join("/tmp", randfilename)
-
+                
                 # upload file
                 self.meas_node.upload_file(local_file_path, remote_tmp_file_path)  # retry=3, retry_interval=10, username="mfuser", private_key="mfuser_private_key")
                 cmd = f"sudo mv {remote_tmp_file_path} {final_remote_file_path};  sudo chown mfuser:mfuser {final_remote_file_path};"
@@ -788,7 +789,7 @@ class Core():
         if not local_file_path:
             local_file_path = os.path.join(self.local_slice_directory, service, filename)
             # ensure local directory exists
-            local_dir_path = os.path.dirname(local_file_path)
+            local_dir_path = os.path.dirname(local_file_path) 
             if not os.path.exists(local_dir_path):
                 os.makedirs(local_dir_path)
 
@@ -805,8 +806,8 @@ class Core():
             print(f"Download service file Fail: {e}")
             self.core_logger.exception()
             return {"success":False}
-
-
+        
+        
     def _clone_mf_repo(self):
         """
         Clone the repo to the mfuser on the meas node.|
@@ -816,14 +817,14 @@ class Core():
         self.core_logger.info(f"Cloned MeasurementFramework branch '{self.mf_repo_branch}' to measure node.")
         if stdout: self.core_logger.debug(f"STDOUT: {stdout}")
         if stderr: self.core_logger.debug(f"STDERR: {stderr}")
-
+        
     def _run_bootstrap_script(self):
         """
         Run the initial bootstrap script in the meas node mf repo.
         """
         cmd = f'sudo -u mfuser /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap.sh'
         stdout, stderr = self.meas_node.execute(cmd)
-
+        
         self.core_logger.info(f"bootstrap bash script ran on measure node.")
         self.core_logger.info(f"STDOUT: {stdout}")
         if stderr: self.core_logger.info(f"STDERR: {stderr}")
@@ -836,19 +837,20 @@ class Core():
         """
         cmd = f'sudo -u mfuser python3 /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap_playbooks.py'
         stdout, stderr = self.meas_node.execute(cmd)
-
+        
         self.core_logger.info(f"bootstrap ansible script ran on measure node.")
         self.core_logger.info(f"STDOUT: {stdout}")
         if stderr: self.core_logger.info(f"STDERR: {stderr}")
 
 
         print("Bootstrap ansible scripts done")
+        
 
 
     def _download_bootstrap_status(self):
         """
-        Downloaded file will be stored locally for future reference.
-        :return: True if bootstrap file downloaded, False otherwise.
+        Downloaded file will be stored locally for future reference.  
+        :return: True if bootstrap file downloaded, False otherwise. 
         :rtype: Boolean # or maybe just the entire json?
         """
         try:
@@ -858,10 +860,10 @@ class Core():
             #print(remote_file_path)
             file_attributes = self.meas_node.download_file(local_file_path, remote_file_path, retry=1) #, retry=3, retry_interval=10): # note retry is really tries
             #print(file_attributes)
-
+            
             return True
         except FileNotFoundError:
-            pass
+            pass 
             # Most likely the file does not exist because it has not yet been created. So we will ignore this exception.
         except Exception as e:
             print("Bootstrap download has failed.")
@@ -873,8 +875,8 @@ class Core():
 
     def _download_mfuser_private_key(self):
         """
-        Downloaded file will be stored locally for future reference.
-        :return: True if key file downloaded, False otherwise.
+        Downloaded file will be stored locally for future reference.  
+        :return: True if key file downloaded, False otherwise. 
         :rtype: Boolean
         """
         try:
@@ -885,9 +887,9 @@ class Core():
             return True
         except Exception as e:
             print(f"Download mfuser private key Failed: {e}")
-        return False
-
-
+        return False  
+    
+    
     def _update_bootstrap(self, key, value):
         """
         Updates the given key to the given value in the bootstrap_status.json file on the meas node.
@@ -896,10 +898,10 @@ class Core():
         #self.download_bootstrap_status()
         #bsf_dict = {}
         bsf_dict[key] = value
-
+        
         with open(self.bootstrap_status_file, "w") as bsf:
             json.dump(bsf_dict, bsf)
-
+    
         try:
             local_file_path = self.bootstrap_status_file
             remote_file_path =  os.path.join("bootstrap_status.json")
@@ -907,16 +909,16 @@ class Core():
             #print(remote_file_path)
             file_attributes = self.meas_node.upload_file(local_file_path, remote_file_path) #, retry=3, retry_interval=10):
             #print(file_attributes)
-
+            
             return True
 
         except Exception as e:
             print("Bootstrap upload has failed.")
             print(f"Fail: {e}")
-        return False
-
-
-
+        return False  
+    
+       
+    
     def _get_service_list(self):
         """
         Gets a list of all currently existing services
@@ -1000,9 +1002,9 @@ class Core():
     def download_log_file(self, service, method):
         """
         Download the log file for the given service and method.
-        Downloaded file will be stored locally for future reference.
+        Downloaded file will be stored locally for future reference. 
         :param service: The name of the service.
-        :type service: String
+        :type service: String 
         :param method: The method name such as create, update, info, start, stop, remove.
         :type method: String
         :return: Writes file to local storage and returns text of the log file.
@@ -1020,7 +1022,7 @@ class Core():
             #print(remote_file_path)
             file_attributes = self.meas_node.download_file(local_file_path, remote_file_path, retry=1) #, retry=3, retry_interval=10): # note retry is really tries
             #print(file_attributes)
-
+            
             with open(local_file_path) as f:
                 log_text = f.read()
                 return local_file_path, log_text
