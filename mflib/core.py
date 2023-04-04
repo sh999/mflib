@@ -42,7 +42,7 @@ class Core():
     It is not intended to be used by itself, but rather, it is the base object for creating Measurement Framework Library objects.
     """
 
-    core_class_version = "1.0.30"
+    core_class_version = "1.0.30-transfer_data_functions"
 
     """
     An updatable version for debugging purposes to make sure the correct version of this file is being used. Anyone can update this value as they see fit.
@@ -925,10 +925,16 @@ class Core():
         :return: all currently existing services
         :rtype: List
         """
-        data = {}
-        data["get"] = ["service_list"]
-        self.core_logger.info(f"Run _get_service_list()")
-        return self._run_on_meas_node("overview", "info", data)["services"]
+        stdout, stderr = self.meas_node.execute(f"ls {self.services_directory}")
+        print("Printing services:")
+        print(stdout)
+        
+        # TODO: Remove placeholder code and implement function
+        return ["prometheus", "elk", "grafana_manager", "overview", "example"]
+        # data = {}
+        # data["get"] = ["service_list"]
+        # self.core_logger.info(f"Run _get_service_list()")
+        # return self._run_on_meas_node("overview", "info", data)["services"]
 
     ############################
     # Auxiliary user methods
