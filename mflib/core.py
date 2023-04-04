@@ -925,16 +925,12 @@ class Core():
         :return: all currently existing services
         :rtype: List
         """
-        stdout, stderr = self.meas_node.execute(f"ls {self.services_directory}")
-        print("Printing services:")
-        print(stdout)
-        
-        # TODO: Remove placeholder code and implement function
-        return ["prometheus", "elk", "grafana_manager", "overview", "example"]
-        # data = {}
-        # data["get"] = ["service_list"]
-        # self.core_logger.info(f"Run _get_service_list()")
-        # return self._run_on_meas_node("overview", "info", data)["services"]
+        service_list = []
+        stdout, stderr = self.meas_node.execute(f"ls {self.services_directory}", quiet=True)
+        for item in stdout.split('\n'):
+            if item != "common":
+                service_list.append(item)
+        return service_list
 
     ############################
     # Auxiliary user methods
