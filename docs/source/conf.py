@@ -25,6 +25,8 @@ release = mflib.__version__
 extensions = [
     'sphinx.ext.autodoc',
     'myst_parser',
+    'sphinx.ext.napoleon',
+    'sphinxcontrib.inkscapeconverter',
 ]
 
 templates_path = ['_templates']
@@ -39,4 +41,6 @@ exclude_patterns = []
 html_theme = "furo"
 html_static_path = ['_static']
 
-
+latex_elements = {
+    'extraclassoptions': 'openany,oneside'
+}

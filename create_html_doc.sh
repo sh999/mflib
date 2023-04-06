@@ -1,7 +1,7 @@
 #! /bin/bash
 
 echo "Has the version in mflib/__init__py been correctly increased?"
-read -p "WARNING: this script DELETES all files in docs/build/html directories. Do you want to continue? Type Y or y:  " -n 1 -r 
+read -p "WARNING: this script DELETES all files in docs/build/html directories. Do you want to continue? [yN]:  " -n 1 -r 
 echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
