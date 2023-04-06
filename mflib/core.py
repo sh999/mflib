@@ -44,7 +44,7 @@ class Core:
     It is not intended to be used by itself, but rather, it is the base object for creating Measurement Framework Library objects.
     """
 
-    core_class_version = "1.0.31dev"
+    core_class_version = "1.0.34"
 
     """
     An updatable version for debugging purposes to make sure the correct version of this file is being used. Anyone can update this value as they see fit.
@@ -346,7 +346,7 @@ class Core:
     The git branch to be used for cloning the MeasurementFramework branch to the Measusrement Node.
     """
 
-    def __init__(self, local_storage_directory="/tmp/mflib", mf_repo_branch="main"):
+    def __init__(self, local_storage_directory="/tmp/mflib", mf_repo_branch="main",logging_level=logging.DEBUG):
         """
         Core constructor
 
@@ -367,7 +367,7 @@ class Core:
         self.mf_repo_branch = mf_repo_branch
 
         self.core_logger = None
-        self.log_level = logging.INFO
+        self.log_level = logging_level
         self.log_filename = os.path.join(self.log_directory, "mflib_core.log")
         self.set_core_logger()
         self.core_logger.info("Creating mflib object.")
@@ -531,28 +531,19 @@ class Core:
             print(f"Failed Public Key Upload: {e}")
             self.core_logger.exception("Failed to upload mfuser keys to default user.")
 
-        # Set the permissions correctly on the remote machine.
-        cmd = f"chmod 644 {self.mfuser_public_key_filename}"
-        self.meas_node.execute(cmd)
-        cmd = f"chmod 600 {self.mfuser_private_key_filename}"
-        self.meas_node.execute(cmd)
-
     def _copy_mfuser_keys_to_mfuser_on_meas_node(self):
         """
         Copies mfuser keys from default location to mfuser .ssh folder and sets ownership & permissions.
         """
         try:
-            cmd = f"sudo cp {self.mfuser_public_key_filename} /home/mfuser/.ssh/{self.mfuser_public_key_filename}; sudo chown mfuser:mfuser /home/mfuser/.ssh/{self.mfuser_public_key_filename}; sudo chmod 644 /home/mfuser/.ssh/{self.mfuser_public_key_filename}"
+            cmd = (
+                    f"sudo cp {self.mfuser_public_key_filename} /home/mfuser/.ssh/{self.mfuser_public_key_filename};"
+                    f"sudo cp {self.mfuser_private_key_filename} /home/mfuser/.ssh/{self.mfuser_private_key_filename};"
+                    f"sudo chmod 644 /home/mfuser/.ssh/{self.mfuser_public_key_filename};"
+                    f"sudo chmod 600 /home/mfuser/.ssh/{self.mfuser_private_key_filename};"
+                    f"sudo chown -R mfuser:mfuser /home/mfuser/.ssh;"
+                    )
             stdout, stderr = self.meas_node.execute(cmd)
-
-            if stdout:
-                self.core_logger.debug(f"STDOUT: {stdout}")
-            if stderr:
-                self.core_logger.debug(f"STDERR: {stderr}")
-
-            cmd = f"sudo cp {self.mfuser_private_key_filename} /home/mfuser/.ssh/{self.mfuser_private_key_filename}; sudo chown mfuser:mfuser /home/mfuser/.ssh/{self.mfuser_private_key_filename}; sudo chmod 600 /home/mfuser/.ssh/{self.mfuser_private_key_filename}"
-            stdout, stderr = self.meas_node.execute(cmd)
-
             if stdout:
                 self.core_logger.debug(f"STDOUT: {stdout}")
             if stderr:
@@ -753,7 +744,7 @@ class Core:
             full_command = f"sudo -u mfuser python3 {self.services_directory}/{service}/{command}.py"
             stdout, stderr = self.meas_node.execute(
                 full_command
-            )  # retry=3, retry_interval=10, username="mfuser", private_key="mfuser_private_key"
+            ,quiet = True)  # retry=3, retry_interval=10, username="mfuser", private_key="mfuser_private_key"
             self.core_logger.info(f"STDOUT: {stdout}")
         except Exception as e:
             print(f"Service Commnad Run Failed: {e}")
@@ -827,11 +818,17 @@ class Core:
         """
         Clones the MeasurementFramework  git repository to /home/mfuser/mf_git on the meas node.
         """
+        msg = (f"Cloning Measurement Framework Repository from github.com...")
+        self.core_logger.debug(msg)
+        print (msg)
+
         cmd = f"sudo -u mfuser git clone -b {self.mf_repo_branch} https://github.com/fabric-testbed/MeasurementFramework.git /home/mfuser/mf_git"
-        stdout, stderr = self.meas_node.execute(cmd)
-        self.core_logger.info(
-            f"Cloned MeasurementFramework branch '{self.mf_repo_branch}' to measure node."
-        )
+        stdout, stderr = self.meas_node.execute(cmd,quiet=True)
+
+        msg = (f"Cloning Measurement Framework Repository from github.com done.")
+        self.core_logger.debug(msg)
+        print (msg)
+
         if stdout:
             self.core_logger.debug(f"STDOUT: {stdout}")
         if stderr:
@@ -841,25 +838,44 @@ class Core:
         """
         Run the initial bootstrap script in the meas node mf repo.
         """
+        msg = (f"Starting Bootstrap Process on Measure Node (bash script)...")
+        self.core_logger.debug(msg)
+        print (msg)
+        
         cmd = f"sudo -u mfuser /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap.sh"
-        stdout, stderr = self.meas_node.execute(cmd)
+        
+        stdout, stderr = self.meas_node.execute(cmd,quiet = True)
 
-        self.core_logger.info(f"bootstrap bash script ran on measure node.")
-        self.core_logger.info(f"STDOUT: {stdout}")
+        msg = (f"Bootstrap Process on Measure Node (bash script) done.")
+        self.core_logger.debug(msg)
+        print (msg)
+        
+        if stdout:
+            self.core_logger.debug(f"STDOUT: {stdout}")
         if stderr:
             self.core_logger.info(f"STDERR: {stderr}")
-
-        print("Bootstrap script done")
 
     def _run_bootstrap_ansible(self):
         """
         Run the initial bootstrap ansible scripts in the meas node mf repo.
         """
-        cmd = f"sudo -u mfuser python3 /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap_playbooks.py"
-        stdout, stderr = self.meas_node.execute(cmd)
+        msg = (f"Starting Bootstrap Process on Measure Node (Ansible Playbook)...")
+        self.core_logger.debug(msg)
+        print (msg)
 
-        self.core_logger.info(f"bootstrap ansible script ran on measure node.")
-        self.core_logger.info(f"STDOUT: {stdout}")
+        cmd = (
+                f"sudo cp /home/mfuser/mf_git/instrumentize/experiment_bootstrap/ansible.cfg /home/mfuser/services/common/ansible.cfg;" 
+                f"sudo chown mfuser:mfuser /home/mfuser/services/common/ansible.cfg;" 
+                f"sudo -u mfuser python3 /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap_playbooks.py;"
+                )
+        stdout, stderr = self.meas_node.execute(cmd,quiet=True)
+        
+        msg = (f"Bootstrap Process on Measure Node (Ansible Playbook) done.")
+        self.core_logger.debug(msg)
+        print (msg)
+        
+        if stdout:
+            self.core_logger.debug(f"STDOUT: {stdout}")
         if stderr:
             self.core_logger.info(f"STDERR: {stderr}")
 
