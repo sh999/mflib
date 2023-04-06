@@ -394,12 +394,13 @@ class Core:
     def create(self, service, data=None, files=[]):
         """
         Creates a new service for the slice.
-        :param service: The name of the service.
-        :type service: String
-        :param data: Data to be passed to a JSON file place in the service's meas node directory.
-        :type data: JSON serializable object.
-        :param files: List of filepaths to be uploaded.
-        :type files: List of Strings
+
+        Args:
+            service(String): The name of the service.
+            data (JSON serializable object) Data to be passed to a JSON file place in the service's meas node directory.
+            files (List of Strings): List of filepaths to be uploaded.
+        Returns:
+            dict: Dictionary of creation results.
         """
         self.core_logger.info(f"Run create for {service}")
         self.core_logger.debug(f"Data is {data}.")
@@ -408,13 +409,16 @@ class Core:
     def update(self, service, data=None, files=[]):
         """
         Updates an existing service for the slice.
-        :param service: The name of the service.
-        :type service: String
-        :param data: Data to be passed to a JSON file place in the service's meas node directory.
-        :type data: JSON serializable object.
-        :param files: List of filepaths to be uploaded.
-        :type files: List of Strings
+
+        Args:
+            service (String): The name of the service.
+            data (JSON Serializable Object): Data to be passed to a JSON file place in the service's meas node directory.
+            files (List of Strings): List of filepaths to be uploaded.
+
+        Returns:
+            dict: Dictionary of update results.
         """
+
         self.core_logger.info(f"Run update for {service}")
         self.core_logger.debug(f"Data is {data}.")
         return self._run_on_meas_node(service, "update", data, files)
@@ -422,10 +426,12 @@ class Core:
     def info(self, service, data=None):
         """
         Gets inormation from an existing service. Strictly gets information, does not change how the service is running.
-        :param service: The name of the service.
-        :type service: String
-        :param data: Data to be passed to a JSON file place in the service's meas node directory.
-        :type data: JSON serializable object.
+        
+        Args:
+            service (String): The name of the service.
+            data (JSON Serializable Object): Data to be passed to a JSON file place in the service's meas node directory.
+        Returns:
+            dict: Dictionary of info results.
         """
         self.core_logger.info(f"Run info for {service}")
         self.core_logger.debug(f"Data is {data}.")
@@ -434,40 +440,54 @@ class Core:
     def start(self, services=[]):
         """
         Restarts a stopped service using existing configs on meas node.
+                
+        Args:
+            services (List of Strings): The name of the services to be restarted.
+        Returns:
+            List: List of start result dictionaries.
         """
+        ret_val = []
         for service in services:
             self.core_logger.info(f"Run start for {service}")
-            return self._run_on_meas_node(service, "start")
+            ret_val.append({"service": service, "results": self._run_on_meas_node(service, "start") } )
+        return ret_val
 
     def stop(self, services=[]):
         """
         Stops a service, does not remove the service, just stops it from using resources.
+                
+        Args:
+            services (List of Strings): The names of the services to be stopped.
+        Returns:
+            List: List of stop result dictionaries.
         """
+        ret_val = []
         for service in services:
             self.core_logger.info(f"Run stop for {service}")
-            return self._run_on_meas_node(service, "stop")
-
-    # def status(self, services=[]):
-    #     """
-    #     Deprecated?, use info instead?
-    #     Returns predefined status info. Does not change the running of the service.
-    #     """
-    #     for service in services:
-    #         return self._run_on_meas_node(service, "status")
+            ret_val.append({"service": service, "results": self._run_on_meas_node(service, "stop") } )
+        return ret_val
 
     def remove(self, services=[]):
         """
         Stops a service running and removes anything setup on the experiment's nodes. Service will then need to be re-created using the create command before service can be started again.
+
+        Args:
+            services (List of Strings): The names of the services to be removed.
+        Returns:
+            List: List of remove result dictionaries.
         """
+
+        ret_val = []
         for service in services:
             self.core_logger.info(f"Run remove for {service}")
-            return self._run_on_meas_node(service, "remove")
+            ret_val.append({"service": service, "results": self._run_on_meas_node(service, "remove") } )
 
     # Utility Methods
 
     def _upload_mfuser_keys(self, private_filename=None, public_filename=None):
         """
         Uploads the mfuser keys to the default user for easy access later.
+
         """
         if private_filename is None:
             private_filename = self.local_mfuser_private_key_filename
@@ -581,8 +601,9 @@ class Core:
     def _find_meas_node(self):
         """
         Finds the node named "meas" in the slice and sets the value for class's meas_node
-        :return: If node found, sets self.meas_node and returns True. If node not found, clears self.meas_node and returns False.
-        :rtype: Boolean
+
+        Returns:
+        Boolean: If node found, sets self.meas_node and returns True. If node not found, clears self.meas_node and returns False.
         """
         try:
             for node in self.slice.get_nodes():
@@ -597,17 +618,16 @@ class Core:
 
     def _run_on_meas_node(self, service, command, data=None, files=[]):
         """
-        Runs a command on the meas node.
-        :param service: The name of the service.
-        :type service: String
-        :param command: The name of the command to run.
-        :type command: String
-        :param data: Data to be passed to a JSON file place in the service's meas node directory.
-        :type data: JSON serializable object.
-        :param files: List of filepaths to be uploaded.
-        :type files: List of Strings
-        :return: The stdout & stderr values from running the command ? Reformat to dict??
-        :rtype: String ? dict??
+        Runs one of the commands available for the service on the meas node. Commands are create, update, info, start, stop, remove
+
+        Args:
+            service(String): The name of the service.
+            command(String): The name of the command to run.
+            data(JSON Serializable Object): Data to be passed to a JSON file place in the service's meas node directory.
+            files(List of Strings): List of filepaths to be uploaded.
+
+        Returns:
+           Dictionary: The stdout & stderr values from running the command formated in dictionary.
         """
         # upload resources
         if data:
@@ -624,10 +644,10 @@ class Core:
     def _upload_service_data(self, service, data):
         """
         Uploads the json serializable object data to a json file on the meas node.
-        :param service: The service to which the data belongs.
-        :type service: String
-        :param data: A JSON serializable dictionary
-        :type data: dict
+
+        Args:
+            service(String): The service to which the data belongs.
+        :   data(Object): A JSON Serializable Object
         """
 
         letters = string.ascii_letters
@@ -718,13 +738,15 @@ class Core:
     def _run_service_command(self, service, command):
         """
         Runs the given comand for the given service on the meas node.
-        :param service: Service name for which the command is being run on the meas node.
-        :type service: String
-        :param files: Command name.
-        :type files: String
+        
+        Args:
+            service(String): Service name for which the command is being run on the meas node.
+        :   files(List of ): Command name.
+
         :raises: Exception: for misc failures....
-        :return: Resulting output? JSON output or dictionary?
-        :rtype: ?
+        Returns:
+            Dictionary: Resulting output of comand JSON converted to dictionary.
+
         """
 
         try:
@@ -751,6 +773,7 @@ class Core:
             # TODO add stderr to return value?
         except Exception as e:
             print("Unable to convert returned comand json.")
+            # TODO create dictionary with malformed data.
             print("STDOUT: ")
             print(stdout)
             print("STDERR: ")
@@ -763,7 +786,7 @@ class Core:
             if stderr:
                 self.core_logger.debug(f"STDERR: {stderr}")
 
-        return {}  # (stdout, stderr)
+        return {}
 
     def _download_service_file(self, service, filename, local_file_path=""):
         """
@@ -802,7 +825,7 @@ class Core:
 
     def _clone_mf_repo(self):
         """
-        Clone the repo to the mfuser on the meas node.|
+        Clones the MeasurementFramework  git repository to /home/mfuser/mf_git on the meas node.
         """
         cmd = f"sudo -u mfuser git clone -b {self.mf_repo_branch} https://github.com/fabric-testbed/MeasurementFramework.git /home/mfuser/mf_git"
         stdout, stderr = self.meas_node.execute(cmd)
@@ -847,10 +870,12 @@ class Core:
     ###########################
     def get_bootstrap_status(self, force=True):
         """
-        Returns the bootstrap status for the slice. Default setting of force will always download the most recent file from the meas node.
-        :param force: If downloaded file already exists locally, it will not be downloaded unless force is True. The downloaded file will be stored locally for future reference.
-        :return: Bootstrap dict if any type of bootstraping has occured, None otherwise.
-        :rtype: dict
+        Returns the bootstrap status for the slice. Default setting of force will always download the most recent file from the meas node. The downloaded file will be stored locally for future reference at self.bootstrap_status_file.
+        
+        Args:
+            force(Boolean): If downloaded file already exists locally, it will not be downloaded unless force is True. .
+        Returns:
+            Dictionary: Bootstrap dict if any type of bootstraping has occured, Empty dict otherwise.
         """
         if force or not os.path.exists(self.bootstrap_status_file):
             if not self._download_bootstrap_status():
@@ -897,9 +922,10 @@ class Core:
 
     def _download_bootstrap_status(self):
         """
-        Downloaded file will be stored locally for future reference.
-        :return: True if bootstrap file downloaded, False otherwise.
-        :rtype: Boolean # or maybe just the entire json?
+        Downloads the bootstrap file from the meas_node. The downloaded file will be stored locally for future reference at self.bootstrap_status_file.
+        
+        Returns:
+            Boolean: True if bootstrap file downloaded, False otherwise.
         """
         try:
             local_file_path = self.bootstrap_status_file
@@ -923,10 +949,13 @@ class Core:
 
     def get_mfuser_private_key(self, force=True):
         """
-        Returns the mfuser private key. Default setting of force will always download the most recent file from the meas node.
-        :param force: If downloaded file already exists locally, it will not be downloaded unless force is True. The downloaded file will be stored locally for future reference.
-        :return: True if file is found, false otherwise.
-        :rtype: Boolean
+        Downloads the mfuser private key. Default setting of force will always download the most recent file from the meas node. The downloaded file will be stored locally for future reference at self.local_mfuser_private_key_filename.
+        
+         
+        Args: 
+            force(Boolean): If downloaded file already exists locally, it will not be downloaded unless force is True.
+        Returns:
+            Boolean: True if file is found, false otherwise.
         """
         if force or not os.path.exists(self.local_mfuser_private_key_filename):
             self._download_mfuser_private_key()
@@ -938,9 +967,10 @@ class Core:
 
     def _download_mfuser_private_key(self):
         """
-        Downloaded file will be stored locally for future reference.
-        :return: True if key file downloaded, False otherwise.
-        :rtype: Boolean
+        Downloads the mfuser private key from the meas node. The downloaded file will be stored locally for future reference at self.local_mfuser_private_key_filename.
+        
+        Returns:
+            Boolean: True if key file downloaded, False otherwise.
         """
         try:
             local_file_path = self.local_mfuser_private_key_filename
@@ -952,6 +982,7 @@ class Core:
             return True
         except Exception as e:
             print(f"Download mfuser private key Failed: {e}")
+            self.core_logger.error(f"Download mfuser private key Failed: {e}")
         return False
 
     def _update_bootstrap(self, key, value):

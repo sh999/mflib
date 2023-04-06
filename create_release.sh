@@ -10,7 +10,7 @@ then
     rm dist/mflib*
     echo ""
     echo "***** Building mflib package dist tar file. *****"
-    python setup.py sdist
+    flit build
     echo "***** Done *****"
 
     echo "***** To test PyPi release upload to twine using: twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
