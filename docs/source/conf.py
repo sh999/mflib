@@ -26,6 +26,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'myst_parser',
     'sphinx.ext.napoleon',
+    'sphinxcontrib.inkscapeconverter',
 ]
 
 templates_path = ['_templates']

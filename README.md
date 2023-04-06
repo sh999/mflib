@@ -59,12 +59,12 @@ Latex must be installed. For Debian use:
 ```
 sudo apt install texlive-latex-extra 
 sudo apt install latexmk
+
 ```
 Run the bash script to create the MFLIB.pdf documentation. MFLIB.pdf will be placed in the root directory of the repository.
 ```
 ./create_pdf_doc.sh
 ```
-If error "! LaTeX Error: Unknown graphics extension: .svg." Just type enter to continue. 
 
 ### Distribution Package
 
