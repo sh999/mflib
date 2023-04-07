@@ -578,7 +578,7 @@ class MFLib(Core):
                         f"hostname={ip_addr} "
                         f"ansible_ssh_user={mfuser} "
                         f"node_exporter_listen_ip={ip_addr} "
-                        f"ansible_ssh_common_args='-o StrictHostKeyChecking=no'"
+                        f"ansible_ssh_common_args='-o StrictHostKeyChecking=no' "
                         f"management_ip_type=\"{node.validIPAddress(node.get_management_ip())}\""
                     )
 
