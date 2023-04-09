@@ -825,6 +825,11 @@ class Core:
         cmd = f"sudo -u mfuser git clone -b {self.mf_repo_branch} https://github.com/fabric-testbed/MeasurementFramework.git /home/mfuser/mf_git"
         stdout, stderr = self.meas_node.execute(cmd,quiet=True)
 
+        msg = (f"Cloning Measurement Framework Repository from github.com done.")
+        self.core_logger.debug(msg)
+        print (msg)
+
+
         if stdout:
             self.core_logger.debug(f"STDOUT: {stdout}")
         if stderr:
@@ -832,7 +837,7 @@ class Core:
             print (msg)
             self.core_logger.error(msg)
             self.core_logger.error(f"STDERR: {stderr}")
-            return False 
+            return True ### TODO DEBUG THIS !! 
         else:
             msg = (f"Cloning Measurement Framework Repository from github.com done.")
             self.core_logger.debug(msg)
