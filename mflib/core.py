@@ -919,27 +919,27 @@ class Core:
         else:
             return {}
 
-    # def clear_bootstrap_status(self):
-    #     """
-    #     Deletes the local and remote copy of the bootstrap_status files. This will then allow a rerunning of the init bootstrapping process.
-    #     This is mainly intended for testing/debugging.
-    #     Note that nothing will be removed from the nodes.
-    #     """
+    def _clear_bootstrap_status(self):
+        """
+        Deletes the local and remote copy of the bootstrap_status files. This will then allow a rerunning of the init bootstrapping process.
+        This is mainly intended for testing/debugging.
+        Note that nothing will be removed from the nodes.
+        """
 
-    #     # Delete local copy
-    #     if os.path.exists(self.bootstrap_status_file):
-    #         os.remove(self.bootstrap_status_file)
+        # Delete local copy
+        if os.path.exists(self.bootstrap_status_file):
+            os.remove(self.bootstrap_status_file)
 
-    #     # Delete measurement node copy
-    #     try:
-    #         full_command = "rm bootstrap_status.json"
-    #         stdout, stderr = self.meas_node.execute(full_command)
-    #         self.core_logger.info("Removed remote bootstrap_status file.")
-    #     except Exception as e:
-    #         print(f"rm bootstrap_status.json Failed: {e}")
-    #         self.core_logger.exception(f"rm bootstrap_status.json Failed: {e}")
-    #         if stdout: self.core_logger.debug(f"STDOUT: {stdout}")
-    #         if stderr: self.core_logger.debug(f"STDERR: {stderr}")
+        # Delete measurement node copy
+        try:
+            full_command = "rm bootstrap_status.json"
+            stdout, stderr = self.meas_node.execute(full_command)
+            self.core_logger.info("Removed remote bootstrap_status file.")
+        except Exception as e:
+            print(f"rm bootstrap_status.json Failed: {e}")
+            self.core_logger.exception(f"rm bootstrap_status.json Failed: {e}")
+            if stdout: self.core_logger.debug(f"STDOUT: {stdout}")
+            if stderr: self.core_logger.debug(f"STDERR: {stderr}")
 
     def _download_bootstrap_status(self):
         """
