@@ -832,7 +832,11 @@ class Core:
         if stdout:
             self.core_logger.debug(f"STDOUT: {stdout}")
         if stderr:
-            self.core_logger.debug(f"STDERR: {stderr}")
+            msg = (f"Cloning Measurement Framework Repository from github.com Failed.")
+            self.core_logger.error(msg)
+            self.core_logger.error(f"STDERR: {stderr}")
+            return False 
+        return True
 
     def _run_bootstrap_script(self):
         """

@@ -395,8 +395,12 @@ class MFLib(Core):
                 self.mflib_logger.info(msg)
             else:
                 # if True:
-                self._clone_mf_repo()
-                self._update_bootstrap("repo_cloned", "ok")
+                if self._clone_mf_repo():
+                    self._update_bootstrap("repo_cloned", "ok")
+                else:
+                    msg = (f"Measurement Framework github repository clone Failed.")
+                    return False
+
 
             #######################################
             # Create measurement network interfaces
