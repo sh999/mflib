@@ -45,7 +45,7 @@ class MFLib(Core):
         MFLib allows for adding and controlling the MeasurementFramework in a Fabric experiementers slice.
     """
 
-    mflib_class_version = "1.0.34"
+    mflib_class_version = "1.0.35"
 
     def set_mflib_logger(self):
         """
