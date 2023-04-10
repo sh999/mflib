@@ -40,9 +40,10 @@ import logging
 
 from mflib.core import Core
 
+
 class MFLib(Core):
     """
-        MFLib allows for adding and controlling the MeasurementFramework in a Fabric experiementers slice.
+    MFLib allows for adding and controlling the MeasurementFramework in a Fabric experiementers slice.
     """
 
     mflib_class_version = "1.0.34"
@@ -102,8 +103,14 @@ class MFLib(Core):
     # This is a temporary method needed untill modify slice ability is avaialble.
     @staticmethod
     def addMeasNode(
-        slice, cores=4, ram=16, disk=500, network_type="FABNetv4", site="NCSA",
-    image="default_ubuntu_20"):
+        slice,
+        cores=4,
+        ram=16,
+        disk=500,
+        network_type="FABNetv4",
+        site="NCSA",
+        image="default_ubuntu_20",
+    ):
         """
         Adds Measurement node and measurement network to an unsubmitted slice object.
 
@@ -302,7 +309,7 @@ class MFLib(Core):
             else:
                 # if True:
                 # Install mflib user/environment
-                msg = (f"Installing mfuser account...")
+                msg = f"Installing mfuser account..."
                 self.mflib_logger.info(msg)
                 print(msg)
                 mfusers_install_success = True
@@ -324,26 +331,22 @@ class MFLib(Core):
 
                         mfusers_install_success = False
 
-
-
                 # Add user
                 threads = []
                 cmd = (
-                        f"sudo useradd -s /bin/bash -G root -m mfuser;"
-                        f"sudo mkdir /home/mfuser/.ssh;"
-                        f"sudo chmod 700 /home/mfuser/.ssh;"
-                        f"echo 'mfuser ALL=(ALL:ALL) NOPASSWD: ALL' | sudo tee -a /etc/sudoers.d/90-cloud-init-users;"
-                        f"sudo mv mfuser.pub /home/mfuser/.ssh/mfuser.pub;"
-                        f"sudo cat /home/mfuser/.ssh/mfuser.pub | sudo tee -a /home/mfuser/.ssh/authorized_keys;"
-                        f"sudo chmod 644 /home/mfuser/.ssh/authorized_keys;"
-                        f"sudo chown -R mfuser:mfuser /home/mfuser/.ssh;"
-                        )
+                    f"sudo useradd -s /bin/bash -G root -m mfuser;"
+                    f"sudo mkdir /home/mfuser/.ssh;"
+                    f"sudo chmod 700 /home/mfuser/.ssh;"
+                    f"echo 'mfuser ALL=(ALL:ALL) NOPASSWD: ALL' | sudo tee -a /etc/sudoers.d/90-cloud-init-users;"
+                    f"sudo mv mfuser.pub /home/mfuser/.ssh/mfuser.pub;"
+                    f"sudo cat /home/mfuser/.ssh/mfuser.pub | sudo tee -a /home/mfuser/.ssh/authorized_keys;"
+                    f"sudo chmod 644 /home/mfuser/.ssh/authorized_keys;"
+                    f"sudo chown -R mfuser:mfuser /home/mfuser/.ssh;"
+                )
 
                 for node in self.slice.get_nodes():
                     try:
-                        threads.append(
-                            node.execute_thread(cmd)
-                        )
+                        threads.append(node.execute_thread(cmd))
 
                     except Exception as e:
                         print(f"Failed to setup mfuser: {e}")
@@ -362,11 +365,11 @@ class MFLib(Core):
 
                 if mfusers_install_success:
                     self._update_bootstrap("mfusers", "ok")
-                    msg = (f"Installing mfuser account done.")
+                    msg = f"Installing mfuser account done."
                     print(msg)
                     self.mflib_logger.info(msg)
                 else:
-                    msg = (f"Installing mfuser account failed.")
+                    msg = f"Installing mfuser account failed."
                     print(msg)
                     self.mflib_logger.info(msg)
                     return False
@@ -377,7 +380,7 @@ class MFLib(Core):
             if "ipv6_4_nat" in bss and (
                 bss["ipv6_4_nat"] == "set" or bss["ipv6_4_nat"] == "not_needed"
             ):
-                msg = (f"NAT64 Workaround not needed...")
+                msg = f"NAT64 Workaround not needed..."
                 print(msg)
                 self.mflib_logger.info(msg)
             else:
@@ -390,7 +393,7 @@ class MFLib(Core):
             # Clone mf repo
             #######################
             if "repo_cloned" in bss and bss["repo_cloned"] == "ok":
-                msg = (f"Measurement Framework github repository already cloned.")
+                msg = f"Measurement Framework github repository already cloned."
                 print(msg)
                 self.mflib_logger.info(msg)
             else:
@@ -398,16 +401,15 @@ class MFLib(Core):
                 if self._clone_mf_repo():
                     self._update_bootstrap("repo_cloned", "ok")
                 else:
-                    msg = (f"Measurement Framework github repository clone Failed.")
+                    msg = f"Measurement Framework github repository clone Failed."
                     return False
-
 
             #######################################
             # Create measurement network interfaces
             # & Get hosts info for hosts.ini
             ######################################
             if "meas_network" in bss and bss["meas_network"] == "ok":
-                msg = (f"Measurement Network already setup.")
+                msg = f"Measurement Network already setup."
                 print(msg)
                 self.mflib_logger.info(msg)
             else:
@@ -420,7 +422,7 @@ class MFLib(Core):
             # in the hosts files
             #######################
             if "hosts_set" in bss and bss["hosts_set"] == "ok":
-                msg = (f"/etc/host entries already set.")
+                msg = f"/etc/host entries already set."
                 print(msg)
                 self.mflib_logger.info(msg)
             else:
@@ -453,7 +455,7 @@ class MFLib(Core):
             self.mflib_logger.info("Inititialization Done.")
             return True
 
-    def instrumentize(self,elk=True,prometheus=True):
+    def instrumentize(self, elk=True, prometheus=True):
         """
         Instrumentize the slice. This is a convenience method that sets up & starts the monitoring of the slice. Sets up Prometheus, ELK & Grafana.
 
@@ -466,66 +468,64 @@ class MFLib(Core):
         """
         all_data = {}
 
-        if((not elk) and (not prometheus) and (not grafana)):
-            msg = (f"Nothing to Instrumentize on FABRIC Slice {self.slice_name}")
+        if (not elk) and (not prometheus) and (not grafana):
+            msg = f"Nothing to Instrumentize on FABRIC Slice {self.slice_name}"
             print(msg)
             self.mflib_logger.debug(msg)
             return all_data
 
-        msg = (f"Instrumentizing slice \"{self.slice_name}\"")
+        msg = f'Instrumentizing slice "{self.slice_name}"'
         print(msg)
         self.mflib_logger.debug(msg)
-        if (prometheus):
-            msg = (f"   Setting up Prometheus...")
+        if prometheus:
+            msg = f"   Setting up Prometheus..."
             print(msg)
             self.mflib_logger.debug(msg)
 
             prom_data = self.create("prometheus")
-            if (not prom_data['success']):
+            if not prom_data["success"]:
                 print(prom_data)
             self.mflib_logger.debug(prom_data)
 
-            msg = (f"   Setting up Prometheus done.")
+            msg = f"   Setting up Prometheus done."
             print(msg)
             self.mflib_logger.debug(msg)
 
             all_data["prometheues"] = prom_data
 
             # Install the default grafana dashboards.
-            msg = (f"   Setting up grafana_manager & dashboards...")
+            msg = f"   Setting up grafana_manager & dashboards..."
             print(msg)
             self.mflib_logger.info(msg)
 
             grafana_manager_data = self.create("grafana_manager")
-            if (not grafana_manager_data['success']):
+            if not grafana_manager_data["success"]:
                 print(grafana_manager_data)
             self.mflib_logger.debug(grafana_manager_data)
 
-            msg = (f"   Setting up grafana_manager & dashboards done.")
+            msg = f"   Setting up grafana_manager & dashboards done."
             print(msg)
             self.mflib_logger.info(msg)
             all_data["grafana_manager"] = grafana_manager_data
 
-
-        if (elk):
-            msg = (f"   Setting up ELK...")
+        if elk:
+            msg = f"   Setting up ELK..."
             print(msg)
             self.mflib_logger.debug(msg)
 
             elk_data = self.create("elk")
-            if (not elk_data['success']):
+            if not elk_data["success"]:
                 print(elk_data)
             self.mflib_logger.debug(elk_data)
 
-            msg = (f"   Setting up ELK done.")
+            msg = f"   Setting up ELK done."
             print(msg)
             self.mflib_logger.debug(msg)
             all_data["elk"] = elk_data
 
-        msg = (f"Instrumentize Process Complete.")
+        msg = f"Instrumentize Process Complete."
         print(msg)
         self.mflib_logger.info(msg)
-
 
         return all_data
 
@@ -533,7 +533,7 @@ class MFLib(Core):
         hosts = []
         mfuser = "mfuser"
         if set_ip:
-            msg = (f"Configuring Measurement Network...")
+            msg = f"Configuring Measurement Network..."
             print(msg)
             self.mflib_logger.info(msg)
 
@@ -583,7 +583,7 @@ class MFLib(Core):
                         f"ansible_ssh_user={mfuser} "
                         f"node_exporter_listen_ip={ip_addr} "
                         f"ansible_ssh_common_args='-o StrictHostKeyChecking=no' "
-                        f"management_ip_type=\"{node.validIPAddress(node.get_management_ip())}\""
+                        f'management_ip_type="{node.validIPAddress(node.get_management_ip())}"'
                     )
 
         # Prometheus e_Elk
@@ -621,25 +621,26 @@ Experiment_Nodes
         self.meas_node.upload_file(
             local_prom_hosts_filename, f"{remote_dir}/{hosts_ini}"
         )
-        msg = (f"Measurement Network setup complete.")
+        msg = f"Measurement Network setup complete."
         print(msg)
         self.mflib_logger.info(msg)
 
         # create a common version of hosts.ini for all to access
-        msg = (f"Generating Ansible Inventory for Measurement Framework Deployment...")
+        msg = f"Generating Ansible Inventory for Measurement Framework Deployment..."
         print(msg)
         self.mflib_logger.info(msg)
 
         stdout, stderr = self.meas_node.execute(
             f"sudo mkdir -p /home/mfuser/services/common;"
             f"sudo mv {remote_dir}/{hosts_ini} /home/mfuser/services/common/hosts.ini;"
-            f"sudo chown -R mfuser:mfuser /home/mfuser/services /home/mfuser/mf_git;"
-        ,quiet=True)
+            f"sudo chown -R mfuser:mfuser /home/mfuser/services /home/mfuser/mf_git;",
+            quiet=True,
+        )
         if stderr:
-            print (f"STDERR: {stderr}")
+            print(f"STDERR: {stderr}")
             self.mflib_logger.error(f"STDERR: {stderr}")
         self.mflib_logger.debug(f"STDOUT: {stdout}")
-        msg = (f"Ansible Inventory for Measurement Framework Deployment generated and saved.")
+        msg = f"Ansible Inventory for Measurement Framework Deployment generated and saved."
         print(msg)
         self.mflib_logger.info(msg)
 
@@ -660,7 +661,7 @@ Experiment_Nodes
                 return local_file_path, hosts_text
 
         except Exception as e:
-            msg = (f"downloading common hosts file Failed: {e}")
+            msg = f"downloading common hosts file Failed: {e}"
             print(msg)
             self.mflib_logger.error(msg)
             return "", ""
@@ -719,7 +720,7 @@ Experiment_Nodes
             sudo echo -n "2600:1fa0:80b4:db49:34d9:6d1e::         ansible-galaxy.s3.amazonaws.com\n"|sudo tee -a /etc/hosts;
             sudo echo -n "2a01:4f9:c010:3f02:64:0:3455:9777       packages.confluent.io\n"|sudo tee -a /etc/hosts;
             """
-            stdout, stderr = node.execute(commands,quiet=True)
+            stdout, stderr = node.execute(commands, quiet=True)
             self.mflib_logger.info(f"STDOUT: {stdout}")
             if stderr:
                 self.mflib_logger.error(f"STDERR: {stderr}")
@@ -734,13 +735,46 @@ Experiment_Nodes
                 meas_node_meas_net_ip = interface.get_ip_addr()
         if meas_node_meas_net_ip:
             execute_threads = {}
-            cmd = (f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts;')
+            cmd = f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts;'
             for node in self.slice.get_nodes():
                 execute_threads[node] = node.execute_thread(cmd)
-            for node,thread in execute_threads.items():
-                self.mflib_logger.info(f"Waiting for result from node {node.get_name()}")
-                stdout,stderr = thread.result()
-                if stdout :
+            for node, thread in execute_threads.items():
+                self.mflib_logger.info(
+                    f"Waiting for result from node {node.get_name()}"
+                )
+                stdout, stderr = thread.result()
+                if stdout:
                     self.mflib_logger.info(f"STDOUT: {stdout}")
-                if stderr :
+                if stderr:
+                    self.mflib_logger.error(f"STDERR: {stderr}")
+
+    def optimize_repos(self):
+        nodes = self.slice.get_nodes()
+        for node in nodes:
+            IPv6Management = False
+            ip_proto_index = "4"
+            commands = "sudo ip -6 route del default via `ip -6 route show default|grep fe80|awk '{print $3}'` > /dev/null 2>&1"
+            if node.validIPAddress(node.get_management_ip()) == "IPv6":
+                IPv6Management = True
+                ip_proto_index = "6"
+            if [ele for ele in ["rocky", "centos"] if (ele in node.get_image())]:
+                commands = (
+                    f'sudo echo "max_parallel_downloads=10" |sudo tee -a /etc/dnf/dnf.conf;'
+                    f'sudo echo "fastestmirror=True" |sudo tee -a /etc/dnf/dnf.conf;'
+                    f'sudo echo "ip_resolve='
+                    + ip_proto_index
+                    + '" |sudo tee -a /etc/dnf/dnf.conf;'
+                )
+            elif [ele for ele in ["ubuntu", "debian"] if (ele in node.get_image())]:
+                commands = (
+                    'sudo echo "Acquire::ForceIPv'
+                    + ip_proto_index
+                    + ' "true";" | sudo tee -a /etc/apt/apt.conf.d/1000-force-ipv'
+                    + ip_proto_index
+                    + "-transport"
+                )
+            if commands:
+                stdout, stderr = node.execute(commands, quiet=True)
+                self.mflib_logger.info(f"STDOUT: {stdout}")
+                if stderr:
                     self.mflib_logger.error(f"STDERR: {stderr}")
