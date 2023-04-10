@@ -851,10 +851,13 @@ class Core:
         if stdout:
             self.core_logger.debug(f"STDOUT: {stdout}")
         if stderr:
-            msg = f"Cloning Measurement Framework Repository from github.com Failed."
-            self.core_logger.error(msg)
-            self.core_logger.error(f"STDERR: {stderr}")
-            return False
+            if "already exists and is not an empty directory" not in stderr:
+                msg = (
+                    f"Cloning Measurement Framework Repository from github.com Failed."
+                )
+                self.core_logger.error(msg)
+                self.core_logger.error(f"STDERR: {stderr}")
+                return False
         return True
 
     def _run_bootstrap_script(self):
