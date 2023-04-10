@@ -210,7 +210,7 @@ class MFLib(Core):
             msg = f'Optimizing Software Repositories fetch strategies for "{slice_name}"...'
             print(msg)
             self.mflib_logger.info(msg)
-            _optimize_repos()
+            self._optimize_repos()
 
         self.mflib_logger.info(
             f'Inititializing slice "{slice_name}" for MeasurementFramework.'
