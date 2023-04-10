@@ -346,7 +346,12 @@ class Core:
     The git branch to be used for cloning the MeasurementFramework branch to the Measusrement Node.
     """
 
-    def __init__(self, local_storage_directory="/tmp/mflib", mf_repo_branch="main",logging_level=logging.DEBUG):
+    def __init__(
+        self,
+        local_storage_directory="/tmp/mflib",
+        mf_repo_branch="main",
+        logging_level=logging.DEBUG,
+    ):
         """
         Core constructor
 
@@ -426,7 +431,7 @@ class Core:
     def info(self, service, data=None):
         """
         Gets inormation from an existing service. Strictly gets information, does not change how the service is running.
-        
+
         Args:
             service (String): The name of the service.
             data (JSON Serializable Object): Data to be passed to a JSON file place in the service's meas node directory.
@@ -440,7 +445,7 @@ class Core:
     def start(self, services=[]):
         """
         Restarts a stopped service using existing configs on meas node.
-                
+
         Args:
             services (List of Strings): The name of the services to be restarted.
         Returns:
@@ -449,13 +454,18 @@ class Core:
         ret_val = []
         for service in services:
             self.core_logger.info(f"Run start for {service}")
-            ret_val.append({"service": service, "results": self._run_on_meas_node(service, "start") } )
+            ret_val.append(
+                {
+                    "service": service,
+                    "results": self._run_on_meas_node(service, "start"),
+                }
+            )
         return ret_val
 
     def stop(self, services=[]):
         """
         Stops a service, does not remove the service, just stops it from using resources.
-                
+
         Args:
             services (List of Strings): The names of the services to be stopped.
         Returns:
@@ -464,7 +474,9 @@ class Core:
         ret_val = []
         for service in services:
             self.core_logger.info(f"Run stop for {service}")
-            ret_val.append({"service": service, "results": self._run_on_meas_node(service, "stop") } )
+            ret_val.append(
+                {"service": service, "results": self._run_on_meas_node(service, "stop")}
+            )
         return ret_val
 
     def remove(self, services=[]):
@@ -480,7 +492,12 @@ class Core:
         ret_val = []
         for service in services:
             self.core_logger.info(f"Run remove for {service}")
-            ret_val.append({"service": service, "results": self._run_on_meas_node(service, "remove") } )
+            ret_val.append(
+                {
+                    "service": service,
+                    "results": self._run_on_meas_node(service, "remove"),
+                }
+            )
 
     # Utility Methods
 
@@ -537,12 +554,12 @@ class Core:
         """
         try:
             cmd = (
-                    f"sudo cp {self.mfuser_public_key_filename} /home/mfuser/.ssh/{self.mfuser_public_key_filename};"
-                    f"sudo cp {self.mfuser_private_key_filename} /home/mfuser/.ssh/{self.mfuser_private_key_filename};"
-                    f"sudo chmod 644 /home/mfuser/.ssh/{self.mfuser_public_key_filename};"
-                    f"sudo chmod 600 /home/mfuser/.ssh/{self.mfuser_private_key_filename};"
-                    f"sudo chown -R mfuser:mfuser /home/mfuser/.ssh;"
-                    )
+                f"sudo cp {self.mfuser_public_key_filename} /home/mfuser/.ssh/{self.mfuser_public_key_filename};"
+                f"sudo cp {self.mfuser_private_key_filename} /home/mfuser/.ssh/{self.mfuser_private_key_filename};"
+                f"sudo chmod 644 /home/mfuser/.ssh/{self.mfuser_public_key_filename};"
+                f"sudo chmod 600 /home/mfuser/.ssh/{self.mfuser_private_key_filename};"
+                f"sudo chown -R mfuser:mfuser /home/mfuser/.ssh;"
+            )
             stdout, stderr = self.meas_node.execute(cmd)
             if stdout:
                 self.core_logger.debug(f"STDOUT: {stdout}")
@@ -729,7 +746,7 @@ class Core:
     def _run_service_command(self, service, command):
         """
         Runs the given comand for the given service on the meas node.
-        
+
         Args:
             service(String): Service name for which the command is being run on the meas node.
         :   files(List of ): Command name.
@@ -743,9 +760,11 @@ class Core:
         try:
             full_command = f"sudo -u mfuser python3 {self.services_directory}/{service}/{command}.py"
             stdout, stderr = self.meas_node.execute(
-                full_command
-            ,quiet = True)  # retry=3, retry_interval=10, username="mfuser", private_key="mfuser_private_key"
-            self.core_logger.info(f"STDOUT: {stdout}")
+                full_command, quiet=True
+            )  # retry=3, retry_interval=10, username="mfuser", private_key="mfuser_private_key"
+            self.core_logger.debug(f"STDOUT: {json.dumps(stdout, indent=2)}")
+        except ValueError as e:
+            self.core_logger.debug(f"STDOUT: {stdout}")
         except Exception as e:
             print(f"Service Commnad Run Failed: {e}")
         #         print(type(stdout))
@@ -818,48 +837,46 @@ class Core:
         """
         Clones the MeasurementFramework  git repository to /home/mfuser/mf_git on the meas node.
         """
-        msg = (f"Cloning Measurement Framework Repository from github.com...")
+        msg = f"Cloning Measurement Framework Repository from github.com..."
         self.core_logger.debug(msg)
-        print (msg)
+        print(msg)
 
-        cmd = f"sudo -u mfuser git clone -b {self.mf_repo_branch} https://github.com/fabric-testbed/MeasurementFramework.git /home/mfuser/mf_git"
-        stdout, stderr = self.meas_node.execute(cmd,quiet=True)
+        cmd = f"sudo -u mfuser git clone -q -b {self.mf_repo_branch} https://github.com/fabric-testbed/MeasurementFramework.git /home/mfuser/mf_git"
+        stdout, stderr = self.meas_node.execute(cmd, quiet=True)
 
-        msg = (f"Cloning Measurement Framework Repository from github.com done.")
+        msg = f"Cloning Measurement Framework Repository from github.com done."
         self.core_logger.debug(msg)
-        print (msg)
+        print(msg)
 
 
         if stdout:
             self.core_logger.debug(f"STDOUT: {stdout}")
         if stderr:
-            msg = (f"Cloning Measurement Framework Repository from github.com Failed.")
-            print (msg)
-            self.core_logger.error(msg)
-            self.core_logger.error(f"STDERR: {stderr}")
-            return True ### TODO DEBUG THIS !! 
-        else:
-            msg = (f"Cloning Measurement Framework Repository from github.com done.")
-            self.core_logger.debug(msg)
-            print (msg)
+            if "already exists and is not an empty directory" not in stderr:
+                msg = (
+                    f"Cloning Measurement Framework Repository from github.com Failed."
+                )
+                self.core_logger.error(msg)
+                self.core_logger.error(f"STDERR: {stderr}")
+                return False
         return True
 
     def _run_bootstrap_script(self):
         """
         Run the initial bootstrap script in the meas node mf repo.
         """
-        msg = (f"Starting Bootstrap Process on Measure Node (bash script)...")
+        msg = f"Starting Bootstrap Process on Measure Node (bash script)..."
         self.core_logger.debug(msg)
-        print (msg)
-        
-        cmd = f"sudo -u mfuser /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap.sh"
-        
-        stdout, stderr = self.meas_node.execute(cmd,quiet = True)
+        print(msg)
 
-        msg = (f"Bootstrap Process on Measure Node (bash script) done.")
+        cmd = f"sudo -u mfuser /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap.sh"
+
+        stdout, stderr = self.meas_node.execute(cmd, quiet=True)
+
+        msg = f"Bootstrap Process on Measure Node (bash script) done."
         self.core_logger.debug(msg)
-        print (msg)
-        
+        print(msg)
+
         if stdout:
             self.core_logger.debug(f"STDOUT: {stdout}")
         if stderr:
@@ -869,23 +886,26 @@ class Core:
         """
         Run the initial bootstrap ansible scripts in the meas node mf repo.
         """
-        msg = (f"Starting Bootstrap Process on Measure Node (Ansible Playbook)...")
+        msg = f"Starting Bootstrap Process on Measure Node (Ansible Playbook)..."
         self.core_logger.debug(msg)
-        print (msg)
+        print(msg)
 
         cmd = (
-                f"sudo cp /home/mfuser/mf_git/instrumentize/experiment_bootstrap/ansible.cfg /home/mfuser/services/common/ansible.cfg;" 
-                f"sudo chown mfuser:mfuser /home/mfuser/services/common/ansible.cfg;" 
-                f"sudo -u mfuser python3 /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap_playbooks.py;"
-                )
-        stdout, stderr = self.meas_node.execute(cmd,quiet=True)
-        
-        msg = (f"Bootstrap Process on Measure Node (Ansible Playbook) done.")
+            f"sudo cp /home/mfuser/mf_git/instrumentize/experiment_bootstrap/ansible.cfg /home/mfuser/services/common/ansible.cfg;"
+            f"sudo chown mfuser:mfuser /home/mfuser/services/common/ansible.cfg;"
+            f"sudo -u mfuser python3 /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap_playbooks.py;"
+        )
+        stdout, stderr = self.meas_node.execute(cmd, quiet=True)
+
+        msg = f"Bootstrap Process on Measure Node (Ansible Playbook) done."
         self.core_logger.debug(msg)
-        print (msg)
-        
+        print(msg)
+
         if stdout:
-            self.core_logger.debug(f"STDOUT: {stdout}")
+            try:
+                self.core_logger.debug(f"STDOUT: {json.dumps(stdout, indent=2)}")
+            except ValueError as e:
+                self.core_logger.debug(f"STDOUT: {stdout}")
         if stderr:
             self.core_logger.info(f"STDERR: {stderr}")
 
@@ -897,7 +917,7 @@ class Core:
     def get_bootstrap_status(self, force=True):
         """
         Returns the bootstrap status for the slice. Default setting of force will always download the most recent file from the meas node. The downloaded file will be stored locally for future reference at self.bootstrap_status_file.
-        
+
         Args:
             force(Boolean): If downloaded file already exists locally, it will not be downloaded unless force is True. .
         Returns:
@@ -949,7 +969,7 @@ class Core:
     def _download_bootstrap_status(self):
         """
         Downloads the bootstrap file from the meas_node. The downloaded file will be stored locally for future reference at self.bootstrap_status_file.
-        
+
         Returns:
             Boolean: True if bootstrap file downloaded, False otherwise.
         """
@@ -976,9 +996,9 @@ class Core:
     def get_mfuser_private_key(self, force=True):
         """
         Downloads the mfuser private key. Default setting of force will always download the most recent file from the meas node. The downloaded file will be stored locally for future reference at self.local_mfuser_private_key_filename.
-        
-         
-        Args: 
+
+
+        Args:
             force(Boolean): If downloaded file already exists locally, it will not be downloaded unless force is True.
         Returns:
             Boolean: True if file is found, false otherwise.
@@ -994,7 +1014,7 @@ class Core:
     def _download_mfuser_private_key(self):
         """
         Downloads the mfuser private key from the meas node. The downloaded file will be stored locally for future reference at self.local_mfuser_private_key_filename.
-        
+
         Returns:
             Boolean: True if key file downloaded, False otherwise.
         """
