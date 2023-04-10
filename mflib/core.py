@@ -841,7 +841,7 @@ class Core:
         self.core_logger.debug(msg)
         print(msg)
 
-        cmd = f"sudo -u mfuser git clone -b {self.mf_repo_branch} https://github.com/fabric-testbed/MeasurementFramework.git /home/mfuser/mf_git"
+        cmd = f"sudo -u mfuser git clone -q -b {self.mf_repo_branch} https://github.com/fabric-testbed/MeasurementFramework.git /home/mfuser/mf_git"
         stdout, stderr = self.meas_node.execute(cmd, quiet=True)
 
         msg = f"Cloning Measurement Framework Repository from github.com done."
