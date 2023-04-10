@@ -160,7 +160,11 @@ class MFLib(Core):
         )
 
     def __init__(
-        self, slice_name="", local_storage_directory="/tmp/mflib", mf_repo_branch="main"
+        self,
+        slice_name="",
+        local_storage_directory="/tmp/mflib",
+        mf_repo_branch="main",
+        optimize_repos=False,
     ):
         """
         Constructor
@@ -176,7 +180,7 @@ class MFLib(Core):
         self.mflib_log_handler = None
 
         if slice_name:
-            self.init(slice_name)
+            self.init(slice_name, optimize_repos)
 
     def init(self, slice_name):
         """
@@ -201,6 +205,12 @@ class MFLib(Core):
         self.slice = fablib.get_slice(name=slice_name)
 
         self.set_mflib_logger()
+
+        if optimize_repos:
+            msg = f'Optimizing Software Repositories fetch strategies for "{slice_name}"...'
+            print(msg)
+            self.mflib_logger.info(msg)
+            _optimize_repos()
 
         self.mflib_logger.info(
             f'Inititializing slice "{slice_name}" for MeasurementFramework.'
@@ -748,7 +758,7 @@ Experiment_Nodes
                 if stderr:
                     self.mflib_logger.error(f"STDERR: {stderr}")
 
-    def optimize_repos(self):
+    def _optimize_repos(self):
         nodes = self.slice.get_nodes()
         for node in nodes:
             IPv6Management = False
