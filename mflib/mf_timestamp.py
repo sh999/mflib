@@ -34,7 +34,6 @@ import pandas as pd
 import numpy as np
 
 class mf_timestamp():
-    #sanity_version = "2.01"
     
     def __init__(self, slice_name, container_name):
         """
@@ -129,6 +128,41 @@ class mf_timestamp():
         json_obj=json.loads(str(stdout))
         return (json_obj)
     
+    def download_timestamp_file(self, node, data_type, local_file, bind_mount_volume):
+        try:
+            node = self.slice.get_node(name=node)
+        except Exception as e:
+            print(f"Fail: {e}")
+        if (data_type == "packet_timestamp"):
+            remote_file=f"{bind_mount_volume}/packet_output.json"
+        elif (data_type == "event_timestamp"):
+            remote_file=f"{bind_mount_volume}/event_output.json"
+        else:
+            return ("wrong data type")
+        node.download_file(local_file_path=local_file,remote_file_path=remote_file)
+        r = self.read_from_local_file(file=local_file)
+        
+        
+    def read_from_local_file(self, file):
+        result = {}
+        result["hits"]=[]
+        with open(file, 'r') as f:
+            for line in f:
+                if ('"index":{}' in line):
+                    continue
+                else:
+                    try:
+                        json_obj = json.loads(line)
+                        result["hits"].append(json_obj)
+                    except ValueError:
+                        self.logger.debug('Json cannot load %s', line)
+        with open(file, 'w'):
+            pass
+        pretty_json = json.dumps(result["hits"], indent=2)
+        with open(file, 'w') as f:
+            r= json.dump(result["hits"], f)
+        
+    
     def plot_packet_timestamp(self, json_obj):
         x_labels = []
         y_labels = []
@@ -174,7 +208,7 @@ class mf_timestamp():
         plt.show()
         
         
-    def upload_influx(self, node, data_type, bucket, org, token):
+    def upload_timestamp_to_influxdb(self, node, data_type, bucket, org, token):
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
@@ -184,7 +218,7 @@ class mf_timestamp():
         stdout, stderr= node.execute(command)
         
         
-    def download_influx(self, node, data_type, bucket, org, token, name):
+    def download_timestamp_from_influxdb(self, node, data_type, bucket, org, token, name):
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
@@ -193,6 +227,43 @@ class mf_timestamp():
         #print (f"The docker command is {command}")
         stdout, stderr= node.execute(command)
         
+    def generate_csv_on_influxdb_node(self, data_node, name, data_type, bucket, org, token, influxdb_node):
+        if (data_type == "packet_timestamp"):
+            remote_file=f"/tmp/{data_node.lower()}_packet_timestamp.csv"
+            measurement_name=f"{data_node.lower()}.novalocal-packet-timestamp"
+        elif (data_type == "event_timestamp"):
+            remote_file=f"/tmp/{data_node.lower()}_event_timestamp.csv"
+            measurement_name=f"{data_node.lower()}.novalocal-event-timestamp"
+        else:
+            return ("wrong data type")
+        query = f'''curl --request POST \
+                    http://localhost:8086/api/v2/query?org={org} -o {remote_file} \
+                    --header 'Authorization: Token {token}' \
+                    --header 'Accept: application/csv' \
+                    --header 'Content-type: application/vnd.flux' \
+                    --data 'from(bucket:"{bucket}") 
+                        |> range(start: 0) 
+                        |> filter(fn: (r) => r._measurement == "{measurement_name}" and r.name=="{name}")'
+                 '''
+        try:
+            node_influxdb = self.slice.get_node(name=influxdb_node)
+        except Exception as e:
+            print(f"Fail: {e}")
+        node_influxdb.execute(query)
+        
+    def download_file_from_influxdb(self, data_node, data_type, influxdb_node, local_file):
+        remote_file=""
+        if (data_type == "packet_timestamp"):
+            remote_file=f"/tmp/{data_node.lower()}_packet_timestamp.csv"
+        elif (data_type == "event_timestamp"):
+            remote_file=f"/tmp/{data_node.lower()}_event_timestamp.csv"
+        else:
+            return ("wrong data type")
+        try:
+            node_influxdb = self.slice.get_node(name=influxdb_node)
+        except Exception as e:
+            print(f"Fail: {e}")
+        node_influxdb.download_file(local_file_path=local_file,remote_file_path=remote_file)
         
     def deploy_influxdb_dashboard(self, dashboard_file):
         
