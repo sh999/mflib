@@ -465,20 +465,19 @@ class MFLib(Core):
             self.mflib_logger.info("Inititialization Done.")
             return True
 
-    def instrumentize(self, elk=True, prometheus=True):
+    def instrumentize(self, services=["elk", "prometheus"]):
         """
         Instrumentize the slice. This is a convenience method that sets up & starts the monitoring of the slice. Sets up Prometheus, ELK & Grafana.
 
         Args:
-            elk (boolean,optional): Add ELK component of the Measurement Framework.
-            prometheus (boolean,optional): Add Prometheus component of the Measurement Framework.
+            services(List of Strings): Just add the listed components. Options are elk or prometheus.
 
         Returns:
             dict   : The output from each phase of instrumetizing.
         """
         all_data = {}
 
-        if (not elk) and (not prometheus) and (not grafana):
+        if not services:
             msg = f"Nothing to Instrumentize on FABRIC Slice {self.slice_name}"
             print(msg)
             self.mflib_logger.debug(msg)
@@ -486,52 +485,72 @@ class MFLib(Core):
 
         msg = f'Instrumentizing slice "{self.slice_name}"'
         print(msg)
+
         self.mflib_logger.debug(msg)
-        if prometheus:
-            msg = f"   Setting up Prometheus..."
-            print(msg)
-            self.mflib_logger.debug(msg)
 
-            prom_data = self.create("prometheus")
-            if not prom_data["success"]:
-                print(prom_data)
-            self.mflib_logger.debug(prom_data)
+        for service in services:
+            if "prometheus" == service:
+                msg = f"   Setting up Prometheus..."
+                print(msg)
+                self.mflib_logger.debug(msg)
 
-            msg = f"   Setting up Prometheus done."
-            print(msg)
-            self.mflib_logger.debug(msg)
+                prom_data = self.create("prometheus")
+                if not prom_data["success"]:
+                    print(prom_data)
+                self.mflib_logger.debug(prom_data)
 
-            all_data["prometheues"] = prom_data
+                msg = f"   Setting up Prometheus done."
+                print(msg)
+                self.mflib_logger.debug(msg)
 
-            # Install the default grafana dashboards.
-            msg = f"   Setting up grafana_manager & dashboards..."
-            print(msg)
-            self.mflib_logger.info(msg)
+                all_data["prometheues"] = prom_data
 
-            grafana_manager_data = self.create("grafana_manager")
-            if not grafana_manager_data["success"]:
-                print(grafana_manager_data)
-            self.mflib_logger.debug(grafana_manager_data)
+                # Install the default grafana dashboards.
+                msg = f"   Setting up grafana_manager & dashboards..."
+                print(msg)
+                self.mflib_logger.info(msg)
 
-            msg = f"   Setting up grafana_manager & dashboards done."
-            print(msg)
-            self.mflib_logger.info(msg)
-            all_data["grafana_manager"] = grafana_manager_data
+                grafana_manager_data = self.create("grafana_manager")
+                if not grafana_manager_data["success"]:
+                    print(grafana_manager_data)
+                self.mflib_logger.debug(grafana_manager_data)
 
-        if elk:
-            msg = f"   Setting up ELK..."
-            print(msg)
-            self.mflib_logger.debug(msg)
+                msg = f"   Setting up grafana_manager & dashboards done."
+                print(msg)
+                self.mflib_logger.info(msg)
+                all_data["grafana_manager"] = grafana_manager_data
 
-            elk_data = self.create("elk")
-            if not elk_data["success"]:
-                print(elk_data)
-            self.mflib_logger.debug(elk_data)
+            # elif "elk" == service:
+            #     msg = f"   Setting up ELK..."
+            #     print(msg)
+            #     self.mflib_logger.debug(msg)
 
-            msg = f"   Setting up ELK done."
-            print(msg)
-            self.mflib_logger.debug(msg)
-            all_data["elk"] = elk_data
+            #     elk_data = self.create("elk")
+            #     if not elk_data["success"]:
+            #         print(elk_data)
+            #     self.mflib_logger.debug(elk_data)
+
+            #     msg = f"   Setting up ELK done."
+            #     print(msg)
+            #     self.mflib_logger.debug(msg)
+            #     all_data["elk"] = elk_data
+
+            else:
+                msg = f"   Setting up {service}..."
+                print(msg)
+                self.mflib_logger.debug(msg)
+
+                service_data = self.create(service)
+                if not service_data["success"]:
+                    print(service_data)
+                self.mflib_logger.debug(service_data)
+
+                msg = f"   Setting up {service} done."
+                print(msg)
+                self.mflib_logger.debug(msg)
+                all_data[service] = service_data
+
+
 
         msg = f"Instrumentize Process Complete."
         print(msg)
