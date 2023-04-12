@@ -465,7 +465,7 @@ class MFLib(Core):
             self.mflib_logger.info("Inititialization Done.")
             return True
 
-    def instrumentize(self, services=["elk", "prometheus"]):
+    def instrumentize(self, services=[ "prometheus", "elk"]):
         """
         Instrumentize the slice. This is a convenience method that sets up & starts the monitoring of the slice. Sets up Prometheus, ELK & Grafana.
 
@@ -489,6 +489,7 @@ class MFLib(Core):
         self.mflib_logger.debug(msg)
 
         for service in services:
+            service = service.strip()
             if "prometheus" == service:
                 msg = f"   Setting up Prometheus..."
                 print(msg)
@@ -520,22 +521,7 @@ class MFLib(Core):
                 self.mflib_logger.info(msg)
                 all_data["grafana_manager"] = grafana_manager_data
 
-            # elif "elk" == service:
-            #     msg = f"   Setting up ELK..."
-            #     print(msg)
-            #     self.mflib_logger.debug(msg)
-
-            #     elk_data = self.create("elk")
-            #     if not elk_data["success"]:
-            #         print(elk_data)
-            #     self.mflib_logger.debug(elk_data)
-
-            #     msg = f"   Setting up ELK done."
-            #     print(msg)
-            #     self.mflib_logger.debug(msg)
-            #     all_data["elk"] = elk_data
-
-            else:
+            elif service:
                 msg = f"   Setting up {service}..."
                 print(msg)
                 self.mflib_logger.debug(msg)
