@@ -505,6 +505,19 @@ class Core:
             )
 
     # Utility Methods
+    
+    def _get_service_list(self):
+        """
+        Gets a list of all currently existing services
+        :return: all currently existing services
+        :rtype: List
+        """
+        service_list = []
+        stdout, stderr = self.meas_node.execute(f"ls {self.services_directory}", quiet=True)
+        for item in stdout.split('\n'):
+            if item != "common" and item != "":
+                service_list.append(item)
+        return service_list
 
     def _upload_mfuser_keys(self, private_filename=None, public_filename=None):
         """
@@ -1107,24 +1120,7 @@ class Core:
         except Exception as e:
             print("Bootstrap upload has failed.")
             print(f"Fail: {e}")
-        return False  
-    
-       
-    
-    def _get_service_list(self):
-        """
-        Gets a list of all currently existing services
-        :return: all currently existing services
-        :rtype: List
-        """
-        service_list = []
-        stdout, stderr = self.meas_node.execute(f"ls {self.services_directory}", quiet=True)
-        for item in stdout.split('\n'):
-            if item != "common" and item != "":
-                service_list.append(item)
-        return service_list
-
-
+        return False
 
     def download_log_file(self, service, method):
         """
