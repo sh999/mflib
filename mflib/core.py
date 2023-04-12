@@ -42,7 +42,7 @@ class Core():
     It is not intended to be used by itself, but rather, it is the base object for creating Measurement Framework Library objects.
     """
 
-    core_class_version = "1.0.30-transfer_data_functions"
+    core_class_version = "1.0.30"
 
     """
     An updatable version for debugging purposes to make sure the correct version of this file is being used. Anyone can update this value as they see fit.
@@ -685,20 +685,21 @@ class Core():
                 stdout, stderr = self.meas_node.execute(cmd)
 
         except Exception as e:
-            print(f"Service File Upload Failed: {e}")
             self.core_logger.exception("Upload service files failed")
             if stdout: self.core_logger.debug(f"STDOUT: {stdout}")
             if stderr: self.core_logger.debug(f"STDERR: {stderr}")
-            return False
-        return True
+            return {"success": False, "message": f"Service file upload failed: {e}"}
+        return {"success": True, "message": f"Service file {filename} uploaded successfully."}
 
-    def _upload_service_directory(self, service, local_directory_path):
+    def _upload_service_directory(self, service, local_directory_path, force=False):
         """
         Uploads the given local directory to the given service's directory on the meas node.
         :param service: Service name for which the files are being upload to the meas node.
         :type service: String
         :param local_directory_path: List of file paths on local machine.
         :type local_directory_path: String
+        :param force: Whether to overwrite existing directory, if it exists.
+        :type force: Bool
         :raises: Exception: for misc failures....
         :return: ?
         :rtype: ?
@@ -706,8 +707,7 @@ class Core():
 
         local_directory_path = os.path.normpath(local_directory_path)
         if not os.path.dirname(local_directory_path):
-            print("The local directory does not exist.")
-            return {"success": False}
+            return {"success": False, "message": "The local directory does not exist."}
         local_directory_name = os.path.basename(local_directory_path)
 
         # Create a tmp spot for directory
@@ -715,21 +715,27 @@ class Core():
         rand_dir_name = "mf_dir_" + "".join(random.choice(letters) for i in range(10))
         tmp_remote_directory_path = os.path.join("/tmp", rand_dir_name)
 
-        final_remote_directory_path = os.path.join(self.services_directory, service, "files", local_directory_name)
-
+        final_remote_directory_path = os.path.join(self.services_directory, service, "files")
+        
+        stdout, stderr = self.meas_node.execute(f"if test -d {final_remote_directory_path}/{local_directory_name}; then echo 'Directory exists'; else echo 'does not exist'; fi", quiet=True)
+        if "Directory exists" in stdout:
+            if force:
+                stdout, stderr = self.meas_node.execute(f"sudo rm -rf {final_remote_directory_path}/{local_directory_name}")
+            else:
+                return {"success": False, "message": "The selected directory already exists. Run command with force=True to overwrite it."}
+        
         try:
             # upload directory
             self.meas_node.upload_directory(local_directory_path, tmp_remote_directory_path)
-            cmd = f"sudo mv {tmp_remote_directory_path} {final_remote_directory_path};  sudo chown mfuser:mfuser {final_remote_directory_path};"
+            cmd = f"sudo mv -f {tmp_remote_directory_path}/{local_directory_name} {final_remote_directory_path};  sudo chown mfuser:mfuser {final_remote_directory_path}; sudo rm -rf {tmp_remote_directory_path}"
             stdout, stderr = self.meas_node.execute(cmd)
 
         except Exception as e:
-            print(f"Service Directory Upload Failed: {e}")
             self.core_logger.exception("Upload service directory failed")
             if stdout: self.core_logger.debug(f"STDOUT: {stdout}")
             if stderr: self.core_logger.debug(f"STDERR: {stderr}")
-            return False
-        return True
+            return {"success": False, "message": f"Service Directory Upload Failed: {e}"}
+        return {"success": True, "message": f"Service Directory {local_directory_name} uploaded successfully."}
 
     def _run_service_command( self, service, command ):
         """
@@ -801,11 +807,10 @@ class Core():
             #local_file_path = os.path.join(self.local_slice_directory, service, filename)
             remote_file_path = os.path.join(self.services_directory, service, filename)
             file_attributes = self.meas_node.download_file(local_file_path, remote_file_path) #, retry=3, retry_interval=10):
-            return {"success":True, "filename":local_file_path}
+            return {"success":True, "message": "uploaded " + filename + " successfully."}
         except Exception as e:
-            print(f"Download service file Fail: {e}")
             self.core_logger.exception()
-            return {"success":False}
+            return {"success":False, "message": f"Download service file Fail: {e}"}
         
         
     def _clone_mf_repo(self):
@@ -928,7 +933,7 @@ class Core():
         service_list = []
         stdout, stderr = self.meas_node.execute(f"ls {self.services_directory}", quiet=True)
         for item in stdout.split('\n'):
-            if item != "common":
+            if item != "common" and item != "":
                 service_list.append(item)
         return service_list
 
@@ -1054,9 +1059,10 @@ class Core():
             print("Error: Remote file must be within the service directory.")
             return {"success": False}
 
-        # TODO: Make sure a failure from this function will still return to user
         # Call the internal download service file function
-        self._download_service_file(service, filename, local_file_path)
+        output = self._download_service_file(service, filename, local_file_path)
+        print(output)
+        return output
 
     def upload_service_files(self, service, files):
         """
@@ -1073,20 +1079,24 @@ class Core():
 
         # Ensure service inputted is valid
         if service not in self._get_service_list():
-            print("You must specify a valid service")
-            return {"success": False}
+            output = {"success": False, "message": "You must specify a valid service"}
+            print(output)
+            return output
 
         # Call the internal upload service file function
-        # TODO: Check errors and return results
-        self._upload_service_files(service, files)
+        output = self._upload_service_files(service, files)
+        print(output)
+        return output
 
-    def upload_service_directory(self, service, local_directory_path):
+    def upload_service_directory(self, service, local_directory_path, force=False):
         """
         Uploads the given local directory to the given service's directory on the meas node.
         :param service: Service name for which the files are being upload to the meas node.
         :type service: String
         :param local_directory_path: Directory path on local machine.
         :type local_directory_path: String
+        :param force: Whether to overwrite existing directory, if it exists.
+        :type force: Bool
         :raises: Exception: for misc failures....
         :return: ?
         :rtype: ?
@@ -1094,9 +1104,11 @@ class Core():
 
         # Ensure service inputted is valid
         if service not in self._get_service_list():
-            print("You must specify a valid service")
-            return {"success": False}
+            output = {"success": False, "message": "You must specify a valid service"}
+            print(output)
+            return output
 
         # Call the internal upload service directory function
-        # TODO: Check errors and return results
-        self._upload_service_directory(service, local_directory_path)
+        output = self._upload_service_directory(service, local_directory_path, force)
+        print(output)
+        return output
