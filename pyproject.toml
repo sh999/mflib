@@ -28,9 +28,5 @@ name = "mflib"
 [project.urls]
 "Homepage" = "https://github.com/fabric-testbed/mflib"
 
-
-[pypi]
-repository = "https://upload.pypi.org/legacy/"
-
 [testpypi]
 repository = "https://test.pypi.org/legacy/"
