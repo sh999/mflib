@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 
 [project]
-name = "mflib"
+name = "fabrictestbed-mflib"
 license = {file = "LICENSE"}
 authors = [ 
   { name="Carpenter", email="csacarp0@g.uky.edu"},
@@ -21,6 +21,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+
+[tool.flit.module]
+name = "mflib"
 
 [project.urls]
 "Homepage" = "https://github.com/fabric-testbed/mflib"
