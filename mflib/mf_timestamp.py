@@ -208,26 +208,32 @@ class mf_timestamp():
         plt.show()
         
         
-    def upload_timestamp_to_influxdb(self, node, data_type, bucket, org, token):
+    def upload_timestamp_to_influxdb(self, node, data_type, bucket, org, token, influxdb_ip=None):
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
             print(f"Fail: {e}")
         command = f"sudo docker exec -i timestamp python3 /root/services/timestamp/service_files/influxdb_manager.py upload {data_type} -b {bucket} -o {org} -t {token}"
+        if influxdb_ip:
+            cmd = f"-ip {influxdb_ip}"
+            command = f"{command} {cmd}"
         print (f"The docker command is: {command}")
         stdout, stderr= node.execute(command)
         
         
-    def download_timestamp_from_influxdb(self, node, data_type, bucket, org, token, name):
+    def download_timestamp_from_influxdb(self, node, data_type, bucket, org, token, name, influxdb_ip=None):
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
             print(f"Fail: {e}")
         command = f"sudo docker exec -i timestamp python3 /root/services/timestamp/service_files/influxdb_manager.py download {data_type} -b {bucket} -o {org} -t {token} -n {name}"
+        if influxdb_ip:
+            cmd = f"-ip {influxdb_ip}"
+            command = f"{command} {cmd}"
         #print (f"The docker command is {command}")
         stdout, stderr= node.execute(command)
         
-    def generate_csv_on_influxdb_node(self, data_node, name, data_type, bucket, org, token, influxdb_node):
+    def generate_csv_on_influxdb_node(self, data_node, name, data_type, bucket, org, token, influxdb_node_name):
         if (data_type == "packet_timestamp"):
             remote_file=f"/tmp/{data_node.lower()}_packet_timestamp.csv"
             measurement_name=f"{data_node.lower()}.novalocal-packet-timestamp"
@@ -246,12 +252,12 @@ class mf_timestamp():
                         |> filter(fn: (r) => r._measurement == "{measurement_name}" and r.name=="{name}")'
                  '''
         try:
-            node_influxdb = self.slice.get_node(name=influxdb_node)
+            node_influxdb = self.slice.get_node(name=influxdb_node_name)
         except Exception as e:
             print(f"Fail: {e}")
         node_influxdb.execute(query)
         
-    def download_file_from_influxdb(self, data_node, data_type, influxdb_node, local_file):
+    def download_file_from_influxdb(self, data_node, data_type, influxdb_node_name, local_file):
         remote_file=""
         if (data_type == "packet_timestamp"):
             remote_file=f"/tmp/{data_node.lower()}_packet_timestamp.csv"
@@ -260,24 +266,23 @@ class mf_timestamp():
         else:
             return ("wrong data type")
         try:
-            node_influxdb = self.slice.get_node(name=influxdb_node)
+            node_influxdb = self.slice.get_node(name=influxdb_node_name)
         except Exception as e:
             print(f"Fail: {e}")
         node_influxdb.download_file(local_file_path=local_file,remote_file_path=remote_file)
         
-    def deploy_influxdb_dashboard(self, dashboard_file):
+    def deploy_influxdb_dashboard(self, dashboard_file, influxdb_node_name, bind_mount_volume):
         
         # Upload the dashboard file to the directory on meas_node that binds mount on influxdb container
-        meas_node_name = "_meas_node"
         try:
-            meas_node = self.slice.get_node(name=meas_node_name)
+            influxdb_node = self.slice.get_node(name=influxdb_node_name)
         except Exception as e:
             print(f"Fail: {e}")
-        meas_node.upload_file(local_file_path=dashboard_file, remote_file_path="/home/mfuser/influxdb/dashboard.yml")
+        influxdb_node.upload_file(local_file_path=dashboard_file, remote_file_path=f"{bind_mount_volume}/dashboard.yml")
         
         # Apply the template in influxdb 
         command = f"sudo docker exec -i influxdb influx apply --skip-verify --file /var/lib/influxdb2/dashboard.yml"
-        stdout, stderr= meas_node.execute(command)
+        stdout, stderr= influxdb_node.execute(command)
 
 
 
