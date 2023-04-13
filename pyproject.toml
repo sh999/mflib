@@ -30,3 +30,6 @@ name = "mflib"
 
 [testpypi]
 repository = "https://test.pypi.org/legacy/"
+
+[pypi]
+repository = "https://upload.pypi.org/legacy/"
