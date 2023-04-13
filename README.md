@@ -51,8 +51,9 @@ pip install -r docs/requirements.txt
 
 Build the documentation by running the following command from the root directory of the repo.
 ```
-sphinx-build -b html docs/source/ docs/build/html
-```  
+./create_html_doc.sh
+```
+
 The completed documentation may be accessed by clicking on `/docs/build/html/index.html`
 
 #### Build PDF Document
@@ -76,9 +77,8 @@ python3 -m pip install flit
 ```
 To build python package for PyPi run  
 ```
-flit build
+./create_release.sh
 ```
-
 
 #### Uploading to PyPI
 
@@ -88,5 +88,6 @@ flit publish --repository testpypi
 ```
 Once install is good, upload to PiPy  
 ```
-flit publish --repository pypi 
+flit publish
 ```
+Note that Flit places a .pypirc file in your home directory if you do not already have one. Flit may also store your password in the keyring which may break if the password is changed. see [Flit Controlling package uploads](https://flit.pypa.io/en/stable/upload.html). The password can also be added to the .pypirc file. If password contains % signs it will break the .pypirc file.
