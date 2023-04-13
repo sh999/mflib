@@ -12,7 +12,15 @@ then
     echo "***** Building HTML documentation files... *****"
     sphinx-build -b html docs/source/ docs/build/html
     echo ""
-    
+    echo "***** Removing older copy of html doc files... *****"
+    rm -rf docs/html/*
+    echo "Copying HTML to main directory."
+
+    cp docs/build/html/*.html docs/html
+    cp docs/build/html/*.js docs/html
+    cp -R docs/build/html/_static docs/html
+
+
 else
     echo "Aborting, nothing done."
 fi
