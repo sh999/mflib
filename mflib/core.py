@@ -320,14 +320,16 @@ class Core:
             if "FABRIC_ALT_COPY_SSH_CONFIG" in extra_fm_vars:
                 ssh_config = extra_fm_vars["FABRIC_ALT_COPY_SSH_CONFIG"]
             else:
-                errmsg += "FABRIC_ALT_COPY_SSH_CONFIG not found in fabric_rc file. "
+                #errmsg += "FABRIC_ALT_COPY_SSH_CONFIG not found in fabric_rc file. "
+                ssh_config = "~/fabric_tunnel_config/tunnel_ssh_config"
 
             if "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE" in extra_fm_vars:
                 private_key_file = extra_fm_vars[
                     "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE"
                 ]
             else:
-                errmsg += "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE not found in fabric_rc file. "
+                #errmsg += "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE not found in fabric_rc file. "
+                private_key_file = "~/fabric_tunnel_config/slice_key"
 
         if errmsg:
             self.core_logger.error(
