@@ -44,7 +44,7 @@ class Core:
     It is not intended to be used by itself, but rather, it is the base object for creating Measurement Framework Library objects.
     """
 
-    core_class_version = "1.0.36"
+    core_class_version = "1.0.37"
 
     """
     An updatable version for debugging purposes to make sure the correct version of this file is being used. Anyone can update this value as they see fit.
@@ -320,14 +320,16 @@ class Core:
             if "FABRIC_ALT_COPY_SSH_CONFIG" in extra_fm_vars:
                 ssh_config = extra_fm_vars["FABRIC_ALT_COPY_SSH_CONFIG"]
             else:
-                errmsg += "FABRIC_ALT_COPY_SSH_CONFIG not found in fabric_rc file. "
+                #errmsg += "FABRIC_ALT_COPY_SSH_CONFIG not found in fabric_rc file. "
+                ssh_config = "~/fabric_tunnel_config/tunnel_ssh_config"
 
             if "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE" in extra_fm_vars:
                 private_key_file = extra_fm_vars[
                     "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE"
                 ]
             else:
-                errmsg += "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE not found in fabric_rc file. "
+                #errmsg += "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE not found in fabric_rc file. "
+                private_key_file = "~/fabric_tunnel_config/slice_key"
 
         if errmsg:
             self.core_logger.error(
