@@ -16,7 +16,6 @@ For more information about FABRIC vist [fabric-testbed.net](https://fabric-testb
 Documentation for the package is presented in serveral different forms (and maybe include later in this document):
 * [ReadTheDocs](https://fabrictestbed-mflib.readthedocs.io/en/latest/)
 * [MFLib.pdf](https://github.com/fabric-testbed/mflib/blob/main/MFLib.pdf) in the source code/GitHub.
-* [MFLib HTML Index](https://github.com/fabric-testbed/mflib/blob/main/docs/html/index.html) in the source code/GitHub.
 * Or you may build the documentation from the source code. See Sphinx Documentation later in this document.
 
 ## MFLib Installation
@@ -54,7 +53,7 @@ Build the documentation by running the following command from the root directory
 ./create_html_doc.sh
 ```
 
-The completed documentation may be accessed by clicking on `/docs/build/html/index.html`
+The completed documentation may be accessed by clicking on `/docs/build/html/index.html`. Note that the HTML docs are not saved to the repository.
 
 #### Build PDF Document
 Latex must be installed. For Debian use: 
@@ -72,9 +71,7 @@ Run the bash script to create the MFLIB.pdf documentation. MFLIB.pdf will be pla
 
 MFLib package is created using [Flit](https://flit.pypa.io/en/stable/)
 Be sure to create and commit the PDF documentation to GitHub before building and publishing to PyPi. The MFLib.pdf is included in the distributition.
-```
-python3 -m pip install flit
-```
+
 To build python package for PyPi run  
 ```
 ./create_release.sh
