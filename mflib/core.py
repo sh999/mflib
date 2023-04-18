@@ -988,9 +988,9 @@ class Core:
             Dictionary: Bootstrap dict if any type of bootstraping has occured, Empty dict otherwise.
         """
         if force or not os.path.exists(self.bootstrap_status_file):
-            if not self._download_bootstrap_status():
-                # print("Bootstrap file was not downloaded. Bootstrap most likely has not been done.")
-                return {}
+            download_success, download_msg = self._download_bootstrap_status()
+            if not download_success:
+                return {"msg", download_msg }
 
         if os.path.exists(self.bootstrap_status_file):
             with open(self.bootstrap_status_file) as bsf:
@@ -1047,15 +1047,19 @@ class Core:
             )  # , retry=3, retry_interval=10): # note retry is really tries
             # print(file_attributes)
 
-            return True
+            return True, ""
         except FileNotFoundError:
             pass
             # Most likely the file does not exist because it has not yet been created. So we will ignore this exception.
+            self.core_logger.warning("Bootstrap file not found on Measure Node")
+            return True, "File not found"
         except Exception as e:
-            print("Bootstrap download has failed.")
-            print(f"Fail: {e}")
-            return False
-        return False
+            msg = f"Bootstrap download has failed. Fail: {e}"
+            #print("Bootstrap download has failed.")
+            #print(f"Fail: {e}")
+            #return {"msg":msg, "success":False}
+            return False, msg
+        #return {}
 
     def get_mfuser_private_key(self, force=True):
         """
