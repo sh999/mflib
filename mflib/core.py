@@ -993,6 +993,9 @@ class Core:
                 return {"msg", download_msg }
 
         if os.path.exists(self.bootstrap_status_file):
+            if os.stat(self.bootstrap_status_file).st_size == 0:
+                return {}
+                # workaround download creating empty file if file not found
             with open(self.bootstrap_status_file) as bsf:
                 try:
                     bootstrap_dict = json.load(bsf)
