@@ -277,23 +277,27 @@ class OwlDataAnalyzer():
         r = fablib.get_resources()
         
         df = pd.DataFrame(columns = ['node_name', 'site_name', 'lon', 'lat', 'exp_ip'])
-        
         for node in nodes:
             node_name = node.get_name()
-            site_name = node.get_site()
-            lat, lon = r.get_location_lat_long(site_name)
-            node_ip = self.list_experiment_ip_addrs(node)[0]
+            
+            if node_name == "_meas_node":
+                pass
+            else: 
+                site_name = node.get_site()
+                lat, lon = r.get_location_lat_long(site_name)
+                node_ip = self.list_experiment_ip_addrs(node)[0]
 
-            new_row = pd.DataFrame([{
-                            'node_name': node_name,
-                            'site_name': site_name,
-                            'lon': lon,
-                            'lat': lat,
-                            'exp_ip': node_ip}])
-            df = pd.concat([df, new_row]) 
-        
+                new_row = pd.DataFrame([{
+                                'node_name': node_name,
+                                'site_name': site_name,
+                                'lon': lon,
+                                'lat': lat,
+                                'exp_ip': node_ip}])
+                df = pd.concat([df, new_row]) 
+                
         return df
-    
+   
+
     @staticmethod
     def print_map(df):
         """
