@@ -235,6 +235,9 @@ class MFLib(Core):
         )
 
         bss = self.get_bootstrap_status()
+        if "msg" in bss:
+            print(f"Bootstrap Download failed {bss['msg']}")
+            return False 
         if bss:
             # print("Bootstrap status is")
             # print(bss)

@@ -49,6 +49,18 @@ class mf_timestamp():
         
             
     def record_packet_timestamp(self, node, name, interface, ipversion, protocol, duration, host=None, port=None, verbose=False):
+        """
+        Records packet timestamp by calling timestamptool.py in the timestamp docker container running on the node
+        Args:
+            node(fablib.node): fabric node on which the timestamp docker container is running 
+            name(str): name of the packet timestamp experiment
+            interface(str): which interface tcpdump captures the packets
+            ipversion(str): IPv4 or IPv6
+            protocol(str): tcp or udp
+            duration(str): seconds to run tcpdump
+            host(str, optional): host for tcpdump command
+            port(str, optional): port for tcpdump command
+        """
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
@@ -75,6 +87,14 @@ class mf_timestamp():
 
             
     def record_event_timestamp(self, node, name, event, description=None, verbose=False):
+        """
+        Records event timestamp by calling timestamptool.py in the timestamp docker container running on the node
+        Args:
+            node(fablib.node): fabric node on which the timestamp docker container is running
+            name(str): name of the event timestamp experiment
+            event(str): name of the event
+            description(str, optional): description of the event
+        """
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
@@ -94,6 +114,13 @@ class mf_timestamp():
         
             
     def get_packet_timestamp(self, node, name, verbose=False):
+        """
+        Prints the collected packet timestamp by calling timestamptool.py in the timestamp docker container running on the node
+        It reads the local packet timestamp file and prints the result 
+        Args:
+            node(fablib.node): fabric node on which the timestamp docker container is running
+            name(str): name of the packet timestamp experiment
+        """
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
@@ -112,6 +139,13 @@ class mf_timestamp():
         
         
     def get_event_timestamp(self, node, name, verbose=False):
+        """
+        Prints the collected event timestamp by calling timestamptool.py in the timestamp docker container running on node
+        It reads the local event timestamp file and prints the result 
+        Args:
+            node(fablib.node): fabric node on which the timestamp docker container is running
+            name(str): name of the event timestamp experiment
+        """
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
@@ -129,6 +163,15 @@ class mf_timestamp():
         return (json_obj)
     
     def download_timestamp_file(self, node, data_type, local_file, bind_mount_volume):
+        """
+        Downloads the collected timestamp file to Jupyterhub 
+        Use fablib node.download_file() to download the timestamp data file that can be accessed from the bind mount volume 
+        Args:
+            node(fablib.node): fabric node on which the timestamp docker container is running
+            data_type(str): packet_timestamp or event timestamp
+            local_file(str): path on Jupyterhub for the download file
+            bind_mount_volume(str): bind mount volume of the running timestamp docker container
+        """
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
@@ -144,6 +187,11 @@ class mf_timestamp():
         
         
     def read_from_local_file(self, file):
+        """
+        Reads and processes the downloaded timestamp data file 
+        Args:
+            file(str): file path on Jupyterhub for the final timestamp result
+        """
         result = {}
         result["hits"]=[]
         with open(file, 'r') as f:
@@ -164,6 +212,11 @@ class mf_timestamp():
         
     
     def plot_packet_timestamp(self, json_obj):
+        """
+        Plots the count of packets captured
+        Args:
+            json_obj(list): list of json objects with timestamp info
+        """
         x_labels = []
         y_labels = []
         count=0
@@ -189,6 +242,11 @@ class mf_timestamp():
         
         
     def plot_event_timestamp(self, json_obj):
+        """
+        Plots the count of events
+        Args:
+            json_obj(list): list of json objects with timestamp info
+        """
         x_labels=[]
         y_labels=[]
         annotation=[]
@@ -208,26 +266,64 @@ class mf_timestamp():
         plt.show()
         
         
-    def upload_timestamp_to_influxdb(self, node, data_type, bucket, org, token):
+    def upload_timestamp_to_influxdb(self, node, data_type, bucket, org, token, influxdb_ip=None):
+        """
+        Uploads the timestamp data to influxdb
+        Args:
+            node(fablib.node): fabric node on which the timestamp docker container is running
+            data_type(str): packet_timestamp or event timestamp
+            bucket(str): name of the influxdb bucket to dump data to
+            org(str): org of the bucket
+            token(str): token of the bucket
+            influxdb_ip(str, optional): IP of the node where influxdb container is running
+        """
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
             print(f"Fail: {e}")
         command = f"sudo docker exec -i timestamp python3 /root/services/timestamp/service_files/influxdb_manager.py upload {data_type} -b {bucket} -o {org} -t {token}"
+        if influxdb_ip:
+            cmd = f"-ip {influxdb_ip}"
+            command = f"{command} {cmd}"
         print (f"The docker command is: {command}")
         stdout, stderr= node.execute(command)
         
         
-    def download_timestamp_from_influxdb(self, node, data_type, bucket, org, token, name):
+    def download_timestamp_from_influxdb(self, node, data_type, bucket, org, token, name, influxdb_ip=None):
+        """
+        Downloads the timestamp data from influxdb
+        Args:
+            node(fablib.node): fabric node on which the timestamp docker container is running
+            data_type(str): packet_timestamp or event timestamp
+            bucket(str): name of the influxdb bucket to dump data to
+            org(str): org of the bucket
+            token(str): token of the bucket
+            name(str): name of the timestamp experiment
+            influxdb_ip(str, optional): the IP address of the node where the influxdb container is running
+        """
         try:
             node = self.slice.get_node(name=node)
         except Exception as e:
             print(f"Fail: {e}")
         command = f"sudo docker exec -i timestamp python3 /root/services/timestamp/service_files/influxdb_manager.py download {data_type} -b {bucket} -o {org} -t {token} -n {name}"
+        if influxdb_ip:
+            cmd = f"-ip {influxdb_ip}"
+            command = f"{command} {cmd}"
         #print (f"The docker command is {command}")
         stdout, stderr= node.execute(command)
         
-    def generate_csv_on_influxdb_node(self, data_node, name, data_type, bucket, org, token, influxdb_node):
+    def generate_csv_on_influxdb_node(self, data_node, name, data_type, bucket, org, token, influxdb_node_name):
+        """
+        Generates a .csv file in the influxdb container for the query data
+        Args:
+            data_node(str): where the data comes from
+            name(str): name of the timestamp experiment
+            data_type(str): packet_timestamp or event timestamp
+            bucket(str): name of the influxdb bucket to dump data to
+            org(str): org of the bucket
+            token(str): token of the bucket
+            influxdb_node_name(str): which fabric node is influxdb running on
+        """
         if (data_type == "packet_timestamp"):
             remote_file=f"/tmp/{data_node.lower()}_packet_timestamp.csv"
             measurement_name=f"{data_node.lower()}.novalocal-packet-timestamp"
@@ -246,12 +342,21 @@ class mf_timestamp():
                         |> filter(fn: (r) => r._measurement == "{measurement_name}" and r.name=="{name}")'
                  '''
         try:
-            node_influxdb = self.slice.get_node(name=influxdb_node)
+            node_influxdb = self.slice.get_node(name=influxdb_node_name)
         except Exception as e:
             print(f"Fail: {e}")
         node_influxdb.execute(query)
         
-    def download_file_from_influxdb(self, data_node, data_type, influxdb_node, local_file):
+    def download_file_from_influxdb(self, data_node, data_type, influxdb_node_name, local_file):
+        """
+        Downlaods the .csv data file from the influxdb container to juputerhub 
+        Args:
+            data_node(str): where the data comes from
+            data_type(str): packet_timestamp or event timestamp
+            influxdb_node_name(str): which fabric node is influxdb running on
+            local_file(str): path on Jupyterhub for the downlaod .csv file
+        """
+        
         remote_file=""
         if (data_type == "packet_timestamp"):
             remote_file=f"/tmp/{data_node.lower()}_packet_timestamp.csv"
@@ -260,24 +365,30 @@ class mf_timestamp():
         else:
             return ("wrong data type")
         try:
-            node_influxdb = self.slice.get_node(name=influxdb_node)
+            node_influxdb = self.slice.get_node(name=influxdb_node_name)
         except Exception as e:
             print(f"Fail: {e}")
         node_influxdb.download_file(local_file_path=local_file,remote_file_path=remote_file)
         
-    def deploy_influxdb_dashboard(self, dashboard_file):
+    def deploy_influxdb_dashboard(self, dashboard_file, influxdb_node_name, bind_mount_volume):
+        """
+        Uploads a dashboard template file from Jupyterhub to influxdb and apply the template 
+        Args:
+            dashboard_file(str): path of the dashboard file on Jupyterhub
+            influxdb_node_name(str): which fabric node is influxdb running on
+            bind_mount_volume(str): bind mount volume of the influxdb docker container
+        """
         
         # Upload the dashboard file to the directory on meas_node that binds mount on influxdb container
-        meas_node_name = "_meas_node"
         try:
-            meas_node = self.slice.get_node(name=meas_node_name)
+            influxdb_node = self.slice.get_node(name=influxdb_node_name)
         except Exception as e:
             print(f"Fail: {e}")
-        meas_node.upload_file(local_file_path=dashboard_file, remote_file_path="/home/mfuser/influxdb/dashboard.yml")
+        influxdb_node.upload_file(local_file_path=dashboard_file, remote_file_path=f"{bind_mount_volume}/dashboard.yml")
         
         # Apply the template in influxdb 
         command = f"sudo docker exec -i influxdb influx apply --skip-verify --file /var/lib/influxdb2/dashboard.yml"
-        stdout, stderr= meas_node.execute(command)
+        stdout, stderr= influxdb_node.execute(command)
 
 
 

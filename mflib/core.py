@@ -28,9 +28,6 @@ import os
 
 from fabrictestbed_extensions.fablib.fablib import fablib
 
-# For getting vars to make tunnel
-from fabrictestbed_extensions.fablib.fablib import FablibManager
-
 
 import string
 import random
@@ -44,7 +41,7 @@ class Core:
     It is not intended to be used by itself, but rather, it is the base object for creating Measurement Framework Library objects.
     """
 
-    core_class_version = "1.0.37"
+    core_class_version = "1.0.38"
 
     """
     An updatable version for debugging purposes to make sure the correct version of this file is being used. Anyone can update this value as they see fit.
@@ -306,43 +303,15 @@ class Core:
         Returns:
             String : SSH command string or error string.
         """
+        # These values from fabric_ssh_tunnel_tools.tgz obtained by user when configuring Fabric environment
+        private_key_file = "slice_key"
+        ssh_config = "ssh_config"
+
         slice_username = self.slice_username
         meas_node_ip = self.meas_node_ip
 
-        # User has setup an ssh config file
-        extra_fm = FablibManager()
-        errmsg = ""
-        ssh_config = ""
-        private_key_file = ""
-
-        extra_fm_vars = extra_fm.read_fabric_rc(extra_fm.default_fabric_rc)
-        if extra_fm_vars:
-            if "FABRIC_ALT_COPY_SSH_CONFIG" in extra_fm_vars:
-                ssh_config = extra_fm_vars["FABRIC_ALT_COPY_SSH_CONFIG"]
-            else:
-                #errmsg += "FABRIC_ALT_COPY_SSH_CONFIG not found in fabric_rc file. "
-                ssh_config = "~/fabric_tunnel_config/tunnel_ssh_config"
-
-            if "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE" in extra_fm_vars:
-                private_key_file = extra_fm_vars[
-                    "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE"
-                ]
-            else:
-                #errmsg += "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE not found in fabric_rc file. "
-                private_key_file = "~/fabric_tunnel_config/slice_key"
-
-        if errmsg:
-            self.core_logger.error(
-                f"It appears you have not added alternate ssh config or slice key file locations to the fabric_rc file. {errmsg} "
-            )
-            return (
-                "It appears you have not added alternate ssh config or slice key file locations to the fabric_rc file. "
-                + errmsg
-            )
-        else:
-            # return f'ssh -L 10010:localhost:443 -F {extra_fm_vars["FABRIC_ALT_SSH_CONFIG"]} -i {extra_fm_vars["FABRIC_ALT_SLICE_PRIVATE_KEY_FILE"]} {self.slice_username}@{self.meas_node_ip}'
-            tunnel_cmd = f"ssh -L {local_port}:localhost:{remote_port} -F {ssh_config} -i {private_key_file} {slice_username}@{meas_node_ip}"
-            return tunnel_cmd
+        tunnel_cmd = f"ssh -L {local_port}:localhost:{remote_port} -F {ssh_config} -i {private_key_file} {slice_username}@{meas_node_ip}"
+        return tunnel_cmd
 
     """
     The git branch to be used for cloning the MeasurementFramework branch to the Measusrement Node.
@@ -440,6 +409,11 @@ class Core:
         Returns:
             dict: Dictionary of info results.
         """
+        # Ensure service inputted is valid
+        if service not in self._get_service_list():
+            print("You must specify a valid service")
+            return {"success": False}
+
         self.core_logger.info(f"Run info for {service}")
         self.core_logger.debug(f"Data is {data}.")
         return self._run_on_meas_node(service, "info", data)
@@ -502,6 +476,19 @@ class Core:
             )
 
     # Utility Methods
+    
+    def _get_service_list(self):
+        """
+        Gets a list of all currently existing services
+        :return: all currently existing services
+        :rtype: List
+        """
+        service_list = []
+        stdout, stderr = self.meas_node.execute(f"ls {self.services_directory}", quiet=True)
+        for item in stdout.split('\n'):
+            if item != "common" and item != "":
+                service_list.append(item)
+        return service_list
 
     def _upload_mfuser_keys(self, private_filename=None, public_filename=None):
         """
@@ -711,7 +698,6 @@ class Core:
         """
         letters = string.ascii_letters
 
-        # TODO could add option to upload a directory of files using fablib.upload_directory
         try:
             for file in files:
                 # Set src/dst filenames
@@ -742,8 +728,54 @@ class Core:
                 self.core_logger.debug(f"STDOUT: {stdout}")
             if stderr:
                 self.core_logger.debug(f"STDERR: {stderr}")
-            return False
-        return True
+            return {"success": False, "message": f"Service file upload failed: {e}"}
+        return {"success": True, "message": f"Service file {filename} uploaded successfully."}
+
+    def _upload_service_directory(self, service, local_directory_path, force=False):
+        """
+        Uploads the given local directory to the given service's directory on the meas node.
+        :param service: Service name for which the files are being upload to the meas node.
+        :type service: String
+        :param local_directory_path: List of file paths on local machine.
+        :type local_directory_path: String
+        :param force: Whether to overwrite existing directory, if it exists.
+        :type force: Bool
+        :raises: Exception: for misc failures....
+        :return: ?
+        :rtype: ?
+        """
+
+        local_directory_path = os.path.normpath(local_directory_path)
+        if not os.path.dirname(local_directory_path):
+            return {"success": False, "message": "The local directory does not exist."}
+        local_directory_name = os.path.basename(local_directory_path)
+
+        # Create a tmp spot for directory
+        letters = string.ascii_letters
+        rand_dir_name = "mf_dir_" + "".join(random.choice(letters) for i in range(10))
+        tmp_remote_directory_path = os.path.join("/tmp", rand_dir_name)
+
+        final_remote_directory_path = os.path.join(self.services_directory, service, "files")
+        
+        stdout, stderr = self.meas_node.execute(f"if test -d {final_remote_directory_path}/{local_directory_name}; then echo 'Directory exists'; else echo 'does not exist'; fi", quiet=True)
+        if "Directory exists" in stdout:
+            if force:
+                stdout, stderr = self.meas_node.execute(f"sudo rm -rf {final_remote_directory_path}/{local_directory_name}")
+            else:
+                return {"success": False, "message": "The selected directory already exists. Run command with force=True to overwrite it."}
+        
+        try:
+            # upload directory
+            self.meas_node.upload_directory(local_directory_path, tmp_remote_directory_path)
+            cmd = f"sudo mv -f {tmp_remote_directory_path}/{local_directory_name} {final_remote_directory_path};  sudo chown mfuser:mfuser {final_remote_directory_path}; sudo rm -rf {tmp_remote_directory_path}"
+            stdout, stderr = self.meas_node.execute(cmd)
+
+        except Exception as e:
+            self.core_logger.exception("Upload service directory failed")
+            if stdout: self.core_logger.debug(f"STDOUT: {stdout}")
+            if stderr: self.core_logger.debug(f"STDERR: {stderr}")
+            return {"success": False, "message": f"Service Directory Upload Failed: {e}"}
+        return {"success": True, "message": f"Service Directory {local_directory_name} uploaded successfully."}
 
     def _run_service_command(self, service, command):
         """
@@ -829,11 +861,10 @@ class Core:
             file_attributes = self.meas_node.download_file(
                 local_file_path, remote_file_path
             )  # , retry=3, retry_interval=10):
-            return {"success": True, "filename": local_file_path}
+            return {"success": True, "message": "uploaded " + filename + " successfully."}
         except Exception as e:
-            print(f"Download service file Fail: {e}")
             self.core_logger.exception()
-            return {"success": False}
+            return {"success": False, "message": f"Download service file Fail: {e}"}
 
     def _clone_mf_repo(self):
         """
@@ -926,11 +957,14 @@ class Core:
             Dictionary: Bootstrap dict if any type of bootstraping has occured, Empty dict otherwise.
         """
         if force or not os.path.exists(self.bootstrap_status_file):
-            if not self._download_bootstrap_status():
-                # print("Bootstrap file was not downloaded. Bootstrap most likely has not been done.")
-                return {}
+            download_success, download_msg = self._download_bootstrap_status()
+            if not download_success:
+                return {"msg", download_msg }
 
         if os.path.exists(self.bootstrap_status_file):
+            if os.stat(self.bootstrap_status_file).st_size == 0:
+                return {}
+                # workaround download creating empty file if file not found
             with open(self.bootstrap_status_file) as bsf:
                 try:
                     bootstrap_dict = json.load(bsf)
@@ -985,15 +1019,19 @@ class Core:
             )  # , retry=3, retry_interval=10): # note retry is really tries
             # print(file_attributes)
 
-            return True
+            return True, ""
         except FileNotFoundError:
             pass
             # Most likely the file does not exist because it has not yet been created. So we will ignore this exception.
+            self.core_logger.warning("Bootstrap file not found on Measure Node")
+            return True, "File not found"
         except Exception as e:
-            print("Bootstrap download has failed.")
-            print(f"Fail: {e}")
-            return False
-        return False
+            msg = f"Bootstrap download has failed. Fail: {e}"
+            #print("Bootstrap download has failed.")
+            #print(f"Fail: {e}")
+            #return {"msg":msg, "success":False}
+            return False, msg
+        #return {}
 
     def get_mfuser_private_key(self, force=True):
         """
@@ -1073,6 +1111,11 @@ class Core:
         :return: Writes file to local storage and returns text of the log file.
         :rtype: String
         """
+        # Ensure service inputted is valid
+        if service not in self._get_service_list():
+            print("You must specify a valid service")
+            return {"success": False}
+
         try:
             local_file_path = os.path.join(self.local_slice_directory, f"{method}.log")
             remote_file_path = os.path.join(
@@ -1093,3 +1136,77 @@ class Core:
             print("Service log download has failed.")
             print(f"Downloading service log file has Failed. It may not exist: {e}")
             return "", ""
+
+    def download_service_file(self, service, filename, local_file_path=""):
+        """
+        Downloads service files from the meas node and places them in the local storage directory.
+        Denies the user from downloading files anywhere outside the service directory
+        :param service: Service name
+        :type service: String
+        :param filename: The filename to download from the meas node.
+        :param local_file_path: Optional filename for local saved file.
+        :type local_file_path: String
+        """
+        # Ensure service inputted is valid
+        if service not in self._get_service_list():
+            print("You must specify a valid service")
+            return {"success": False}
+
+        # Ensure remote file path will be within the service directory.
+        if ".." in filename:
+            print("Error: Remote file must be within the service directory.")
+            return {"success": False}
+
+        # Call the internal download service file function
+        output = self._download_service_file(service, filename, local_file_path)
+        print(output)
+        return output
+
+    def upload_service_files(self, service, files):
+        """
+        Uploads the given local files to the given service's directory on the meas node.
+        Denies the user from uploading files anywhere outside the service directory
+        :param service: Service name for which the files are being upload to the meas node.
+        :type service: String
+        :param files: List of file paths on local machine.
+        :type files: List
+        :raises: Exception: for misc failures....
+        :return: ?
+        :rtype: ?
+        """
+
+        # Ensure service inputted is valid
+        if service not in self._get_service_list():
+            output = {"success": False, "message": "You must specify a valid service"}
+            print(output)
+            return output
+
+        # Call the internal upload service file function
+        output = self._upload_service_files(service, files)
+        print(output)
+        return output
+
+    def upload_service_directory(self, service, local_directory_path, force=False):
+        """
+        Uploads the given local directory to the given service's directory on the meas node.
+        :param service: Service name for which the files are being upload to the meas node.
+        :type service: String
+        :param local_directory_path: Directory path on local machine.
+        :type local_directory_path: String
+        :param force: Whether to overwrite existing directory, if it exists.
+        :type force: Bool
+        :raises: Exception: for misc failures....
+        :return: ?
+        :rtype: ?
+        """
+
+        # Ensure service inputted is valid
+        if service not in self._get_service_list():
+            output = {"success": False, "message": "You must specify a valid service"}
+            print(output)
+            return output
+
+        # Call the internal upload service directory function
+        output = self._upload_service_directory(service, local_directory_path, force)
+        print(output)
+        return output
