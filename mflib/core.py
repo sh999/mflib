@@ -28,9 +28,6 @@ import os
 
 from fabrictestbed_extensions.fablib.fablib import fablib
 
-# For getting vars to make tunnel
-from fabrictestbed_extensions.fablib.fablib import FablibManager
-
 
 import string
 import random
@@ -306,43 +303,15 @@ class Core:
         Returns:
             String : SSH command string or error string.
         """
+        # These values from fabric_ssh_tunnel_tools.tgz obtained by user when configuring Fabric environment
+        private_key_file = "slice_key"
+        ssh_config = "ssh_config"
+
         slice_username = self.slice_username
         meas_node_ip = self.meas_node_ip
 
-        # User has setup an ssh config file
-        extra_fm = FablibManager()
-        errmsg = ""
-        ssh_config = ""
-        private_key_file = ""
-
-        extra_fm_vars = extra_fm.read_fabric_rc(extra_fm.default_fabric_rc)
-        if extra_fm_vars:
-            if "FABRIC_ALT_COPY_SSH_CONFIG" in extra_fm_vars:
-                ssh_config = extra_fm_vars["FABRIC_ALT_COPY_SSH_CONFIG"]
-            else:
-                #errmsg += "FABRIC_ALT_COPY_SSH_CONFIG not found in fabric_rc file. "
-                ssh_config = "~/fabric_tunnel_config/tunnel_ssh_config"
-
-            if "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE" in extra_fm_vars:
-                private_key_file = extra_fm_vars[
-                    "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE"
-                ]
-            else:
-                #errmsg += "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE not found in fabric_rc file. "
-                private_key_file = "~/fabric_tunnel_config/slice_key"
-
-        if errmsg:
-            self.core_logger.error(
-                f"It appears you have not added alternate ssh config or slice key file locations to the fabric_rc file. {errmsg} "
-            )
-            return (
-                "It appears you have not added alternate ssh config or slice key file locations to the fabric_rc file. "
-                + errmsg
-            )
-        else:
-            # return f'ssh -L 10010:localhost:443 -F {extra_fm_vars["FABRIC_ALT_SSH_CONFIG"]} -i {extra_fm_vars["FABRIC_ALT_SLICE_PRIVATE_KEY_FILE"]} {self.slice_username}@{self.meas_node_ip}'
-            tunnel_cmd = f"ssh -L {local_port}:localhost:{remote_port} -F {ssh_config} -i {private_key_file} {slice_username}@{meas_node_ip}"
-            return tunnel_cmd
+        tunnel_cmd = f"ssh -L {local_port}:localhost:{remote_port} -F {ssh_config} -i {private_key_file} {slice_username}@{meas_node_ip}"
+        return tunnel_cmd
 
     """
     The git branch to be used for cloning the MeasurementFramework branch to the Measusrement Node.
