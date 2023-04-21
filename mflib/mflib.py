@@ -737,6 +737,8 @@ Experiment_Nodes
             sudo echo -n "2a01:4f9:c010:3f02:64:0:b9c7:6e85       objects.githubusercontent.com\n"|sudo tee -a /etc/hosts;
             sudo echo -n "2600:1fa0:80b4:db49:34d9:6d1e::         ansible-galaxy.s3.amazonaws.com\n"|sudo tee -a /etc/hosts;
             sudo echo -n "2a01:4f9:c010:3f02:64:0:3455:9777       packages.confluent.io\n"|sudo tee -a /etc/hosts;
+            sudo echo -n "2a01:4f9:c010:3f02:64:0:12d7:8a3a	      registry-1.docker.io\n"|sudo tee -a /etc/hosts;
+            sudo echo -n "2a01:4f9:c010:3f02:64:0:12d7:8a3a	      auth.docker.io\n"|sudo tee -a /etc/hosts;
             """
             stdout, stderr = node.execute(commands, quiet=True)
             self.mflib_logger.info(f"STDOUT: {stdout}")
