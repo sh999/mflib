@@ -861,7 +861,7 @@ class Core:
             file_attributes = self.meas_node.download_file(
                 local_file_path, remote_file_path
             )  # , retry=3, retry_interval=10):
-            return {"success": True, "message": "uploaded " + filename + " successfully."}
+            return {"success": True, "filename": local_file_path, "message": "uploaded " + filename + " successfully."}
         except Exception as e:
             self.core_logger.exception()
             return {"success": False, "message": f"Download service file Fail: {e}"}
