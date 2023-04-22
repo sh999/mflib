@@ -133,7 +133,9 @@ class MFLib(Core):
             ).get_interfaces()[0]
             (interfaces[this_site]).append(this_interface)
 
-        meas_nodename = "_meas_node"
+        # Note this is also defined in self.measurement_node_name but we are in a static method
+        meas_nodename = "meas-node" 
+
         meas_image = image
         meas = slice.add_node(name=meas_nodename, site=site)
 
@@ -555,8 +557,7 @@ class MFLib(Core):
             print(msg)
             self.mflib_logger.info(msg)
 
-        meas_nodename = "_meas_node"
-        meas_node = self.slice.get_node(name=meas_nodename)
+        meas_node = self.slice.get_node(name=self.measurement_node_name)
         meas_site = meas_node.get_site()
         meas_network = self.slice.get_network(name=f"l3_meas_net_{meas_site}")
         meas_net_subnet = meas_network.get_subnet()
@@ -619,7 +620,7 @@ Experiment_Nodes
         experiment_nodes = "[Experiment_Nodes]\n"
         e_experiment_nodes = "[workers]\n"
         for host in hosts:
-            if "_meas_node" in host:
+            if self.measurement_node_name in host:
                 hosts_txt += "[Meas_Node]\n"
                 hosts_txt += host + "\n\n"
             else:  # It is an experimenters node
@@ -751,7 +752,7 @@ Experiment_Nodes
     def _set_all_hosts_file(self):
         meas_node_meas_net_ip = None
         for interface in self.meas_node.get_interfaces():
-            if "_meas_node-meas_nic" in interface.get_name():
+            if "meas-node-meas_nic" in interface.get_name():
                 meas_node_meas_net_ip = interface.get_ip_addr()
         if meas_node_meas_net_ip:
             execute_threads = {}

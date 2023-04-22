@@ -359,7 +359,7 @@ class Core:
 
         # The following are normally constant values
         # Name given to the meas node
-        self.measurement_node_name = "_meas_node"
+        self.measurement_node_name = "meas-node"
         # Services directory on meas node
         self.services_directory = os.path.join("/", "home", "mfuser", "services")
         # Base names for keys

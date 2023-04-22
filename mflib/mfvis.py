@@ -208,7 +208,7 @@ class MFVis(MFLib):
         try:
             slice = self.slice
             for node in slice.get_nodes():
-                if node.get_name() != "_meas_node":
+                if node.get_name() != self.measurement_node_name:
                     self.slice_node_info[node.get_name()]=[]
                     os_interface = []
                     interface_matching = {}
