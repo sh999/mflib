@@ -756,7 +756,10 @@ Experiment_Nodes
                 meas_node_meas_net_ip = interface.get_ip_addr()
         if meas_node_meas_net_ip:
             execute_threads = {}
-            cmd = f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts;'
+            #cmd = f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts;'
+            #TODO WARNING hardcoded _meas_node name here to match existing docker container needs. Need to update
+            #cmd = f'sudo echo -n "{meas_node_meas_net_ip} _meas_node" | sudo tee -a /etc/hosts;'
+            cmd = f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts; sudo echo -n "{meas_node_meas_net_ip} _meas_node" | sudo tee -a /etc/hosts;'
             for node in self.slice.get_nodes():
                 execute_threads[node] = node.execute_thread(cmd)
             for node, thread in execute_threads.items():
