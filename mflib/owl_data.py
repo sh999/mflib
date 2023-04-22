@@ -280,7 +280,7 @@ class OwlDataAnalyzer():
         for node in nodes:
             node_name = node.get_name()
             
-            if node_name == "_meas_node":
+            if node_name == "meas-node":
                 pass
             else: 
                 site_name = node.get_site()
