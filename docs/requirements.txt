@@ -1,3 +1,5 @@
 sphinx
 furo
 myst-parser
+sphinxcontrib-svg2pdfconverter
+sphinx.ext.napoleon
