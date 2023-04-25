@@ -6,3 +6,4 @@ sphinxcontrib-napoleon
 fabrictestbed-extensions
 fabrictestbed-mflib
 scapy
+plotly
