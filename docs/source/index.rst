@@ -5,11 +5,11 @@
 
 .. toctree::
 
-   mf_timestamp
+
    README.md
    overview.md
    mflib
    core
-
+   mf_timestamp
    owl
    owl_data

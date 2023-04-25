@@ -54,15 +54,7 @@ class mf_timestamp():
     def record_packet_timestamp(self, node, name, interface, ipversion, protocol, duration, host=None, port=None, verbose=False):
         """
         Records packet timestamp by calling timestamptool.py in the timestamp docker container running on the node
-        Args:
-            node(fablib.node): fabric node on which the timestamp docker container is running 
-            name(str): name of the packet timestamp experiment
-            interface(str): which interface tcpdump captures the packets
-            ipversion(str): IPv4 or IPv6
-            protocol(str): tcp or udp
-            duration(str): seconds to run tcpdump
-            host(str, optional): host for tcpdump command
-            port(str, optional): port for tcpdump command
+
         """
         try:
             node = self.slice.get_node(name=node)
