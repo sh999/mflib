@@ -52,18 +52,18 @@ class mf_timestamp():
         
             
     def record_packet_timestamp(self, node, name, interface, ipversion, protocol, duration, host=None, port=None, verbose=False):
-        """_summary_
-
-        Args:
-            node (_type_): _description_
-            name (_type_): _description_
-            interface (_type_): _description_
-            ipversion (_type_): _description_
-            protocol (_type_): _description_
-            duration (_type_): _description_
-            host (_type_, optional): _description_. Defaults to None.
-            port (_type_, optional): _description_. Defaults to None.
-            verbose (bool, optional): _description_. Defaults to False.
+        """
+        Constructor.
+        
+        :param local_owl_dir: owl directory path under which conf and output dirs 
+                              will be created.
+        :type local_owl_dir: str
+        :param remote_out_dir: directory on a remote host where output (.pcap)
+                               files will be saved.
+        :type remote_out_dir: str
+        :param remote_conf_dir: directory on a remote host where config files should
+                                be uploaded.
+        :type remote_conf_dir: str
         """
         try:
             node = self.slice.get_node(name=node)
