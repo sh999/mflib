@@ -2,5 +2,5 @@
 OWL Data
 ==========
 
-.. automodule:: mflib.owl_data.OwlDataAnalyzer
+.. automodule:: mflib.owl_data
    :members:

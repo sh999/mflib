@@ -4,6 +4,6 @@ MFLib mf_timestamp
 
 MFLib's Timestamp functions are defined in this class.
 
-.. automodule:: mflib.mf_timestamp.mf_timestamp
+.. automodule:: mflib.mf_timestamp
    :members:
 
