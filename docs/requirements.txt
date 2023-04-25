@@ -3,3 +3,5 @@ furo
 myst-parser
 sphinxcontrib-svg2pdfconverter
 sphinxcontrib-napoleon
+fabrictestbed-extensions
+fabrictestbed-mflib
