@@ -7,3 +7,6 @@ fabrictestbed-extensions
 fabrictestbed-mflib
 scapy
 plotly
+pandas
+numpy
+matplotlib
