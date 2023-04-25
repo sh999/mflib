@@ -52,9 +52,18 @@ class mf_timestamp():
         
             
     def record_packet_timestamp(self, node, name, interface, ipversion, protocol, duration, host=None, port=None, verbose=False):
-        """
-        Records packet timestamp by calling timestamptool.py in the timestamp docker container running on the node
+        """_summary_
 
+        Args:
+            node (_type_): _description_
+            name (_type_): _description_
+            interface (_type_): _description_
+            ipversion (_type_): _description_
+            protocol (_type_): _description_
+            duration (_type_): _description_
+            host (_type_, optional): _description_. Defaults to None.
+            port (_type_, optional): _description_. Defaults to None.
+            verbose (bool, optional): _description_. Defaults to False.
         """
         try:
             node = self.slice.get_node(name=node)
