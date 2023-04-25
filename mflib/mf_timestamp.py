@@ -34,6 +34,9 @@ import pandas as pd
 import numpy as np
 
 class mf_timestamp():
+    """
+    Creates precision timestamps.
+    """
     
     def __init__(self, slice_name, container_name):
         """
