@@ -959,7 +959,7 @@ class Core:
         if force or not os.path.exists(self.bootstrap_status_file):
             download_success, download_msg = self._download_bootstrap_status()
             if not download_success:
-                return {"msg", download_msg }
+                return {"msg":download_msg }
 
         if os.path.exists(self.bootstrap_status_file):
             if os.stat(self.bootstrap_status_file).st_size == 0:
