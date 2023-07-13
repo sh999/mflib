@@ -108,7 +108,7 @@ class MFLib(Core):
         ram=16,
         disk=500,
         network_type="FABNetv4",
-        site="NCSA",
+        site="EDC",
         image="default_ubuntu_20",
     ):
         """
