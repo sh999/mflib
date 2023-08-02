@@ -22,6 +22,7 @@
 #
 
 from fabrictestbed_extensions.fablib.fablib import fablib
+import json
 
 
 class elk_data_transfer:
@@ -128,7 +129,7 @@ class elk_export_service(elk_data_transfer):
 
     def view_snapshot_directory(self):
         commands = [
-            'echo snapshots directory on measurement node:',
+            'echo snapshots in directory on measurement node:',
             'ls /home/mfuser/services/elk/files/snapshots/'
         ]
         for command in commands:
@@ -260,5 +261,62 @@ class elk_import_service(elk_data_transfer):
         for cmd in cmds:
             try:
                 self.node.execute(cmd)
+            except Exception as e:
+                print(f"Fail: {e}")
+
+
+# TODO: Decide if I should create a base init class for both?
+class prometheus_data_transfer:
+    def __init__(self, slice_name, node_name):
+        """
+        Constructor. Builds a base class for all Prometheus data transfer tools
+        - Prometheus
+            - Export
+            - Import
+        """
+        super().__init__()
+        self.slice_name = slice_name
+        try:
+            self.slice = fablib.get_slice(name=self.slice_name)
+        except Exception as e:
+            print(f"Fail: {e}")
+        try:
+            self.node = self.slice.get_node(name=node_name)
+        except Exception as e:
+            print(f"Fail: {e}")
+
+
+class prometheus_export_service(prometheus_data_transfer):
+    def __init__(self, slice_name, node_name):
+        super().__init__(slice_name, node_name)
+        
+    def create_snapshot(self, user, password):
+        try:
+            stdout = self.node.execute(f'sudo curl -k -u {user}:{password} -XPOST https://localhost:9090/api/v1/admin/tsdb/snapshot?skip_head=false')
+            return json.loads(stdout[0])["data"]["name"]
+        except Exception as e:
+            print(f"Fail: {e}")
+        
+    def export_snapshot_tar(self, snapshot_name):
+        commands = [
+            'sudo mkdir -p /home/mfuser/services/prometheus/files/snapshots',
+            f'sudo tar -cvf /home/mfuser/services/prometheus/files/snapshots/{snapshot_name}.tar -C /opt/data/fabric_prometheus/prometheus/snapshots .',
+        ]
+        for command in commands:
+            try:
+                self.node.execute(command=command, quiet=True)
+            except Exception as e:
+                return f"Fail: {e}"
+        return f"Successfully exported {snapshot_name} to /home/mfuser/services/prometheus/files/snapshots/"
+                
+
+    def view_snapshot_directory(self):
+        commands = [
+            'echo snapshots in directory on measurement node:',
+            'ls /home/mfuser/services/prometheus/files/snapshots/'
+        ]
+        for command in commands:
+            try:
+                self.node.execute(command)
             except Exception as e:
                 print(f"Fail: {e}")
