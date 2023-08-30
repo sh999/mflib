@@ -23,26 +23,18 @@
 
 from fabrictestbed_extensions.fablib.fablib import fablib
 import json
+from mflib.mflib import MFLib
 
 
-class elk_data_transfer:
-    def __init__(self, slice_name, node_name):
+class ElkViewer:
+    def __init__(self, node):
         """
-        Constructor. Builds a base class for all ELK data transfer tools
+        Constructor. Builds a base class for functions to query ELK information
         - Elk
             - Export
             - Import
         """
-        super().__init__()
-        self.slice_name = slice_name
-        try:
-            self.slice = fablib.get_slice(name=self.slice_name)
-        except Exception as e:
-            print(f"Fail: {e}")
-        try:
-            self.node = self.slice.get_node(name=node_name)
-        except Exception as e:
-            print(f"Fail: {e}")
+        self.node = node
 
     ##### Query ELK data #####
 
@@ -81,10 +73,76 @@ class elk_data_transfer:
             print(f"Fail: {e}")
 
 
-class elk_export_service(elk_data_transfer):
+class Importer:
+    def __init__(self, node, service, git_repo_path='/home/ubuntu/data-import-containers'):
+        """
+        Constructor. Builds a base class for the import service (for both ELK and Prometheus)
+        - Elk
+            - Export
+            - Import
+        """
+        self.repo_path = git_repo_path
+        self.node = node
+        self.service = service
 
-    def __init__(self, slice_name, node_name):
-        super().__init__(slice_name, node_name)
+    def install_docker(self):
+        commands = [
+            'sudo apt-get update',
+            'sudo apt-get install docker -y',
+            'sudo apt-get install docker-compose -y',
+            'sudo docker -v',
+            'sudo docker-compose -v'
+        ]
+        try:
+            for command in commands:
+                self.node.execute(command)
+        except Exception as e:
+            print(f"Fail: {e}")
+
+    def setup_nat64(self, node_name):
+        commands = [
+            f"sudo sed -i '1s/^/0.0.0.0 {node_name}\\n/' /etc/hosts",
+            "sudo sed -i '/nameserver/d' /etc/resolv.conf",
+            "sudo sh -c 'echo nameserver 2a00:1098:2c::1 >> /etc/resolv.conf'",
+            "sudo sh -c 'echo nameserver 2a01:4f8:c2c:123f::1 >> /etc/resolv.conf'",
+            "sudo sh -c 'echo nameserver 2a00:1098:2b::1 >> /etc/resolv.conf'"
+        ]
+        for command in commands:
+            try:
+                self.node.execute(command)
+            except Exception as e:
+                print(f"Fail: {e}")
+
+    def clone_repository(self):
+        try:
+
+            self.node.execute(
+                f'sudo git clone https://github.com/jackhancockuky/data-import-containers.git {self.repo_path}')
+        except Exception as e:
+            print(f"Fail: {e}")
+
+    def start_docker(self):
+        try:
+            self.node.execute(f'sudo docker-compose -f {self.repo_path}/{self.service}/docker-compose.yml up -d')
+        except Exception as e:
+            print(f"Fail: {e}")
+
+    def stop_docker(self):
+        try:
+            self.node.execute('sudo docker-compose down')
+        except Exception as e:
+            print(f"Fail: {e}")
+
+
+class ElkExporter(MFLib, ElkViewer):
+    def __init__(self, slice_name, node_name="meas-node", local_storage_directory="/mflib"):
+        MFLib.__init__(self, slice_name, local_storage_directory)
+        try:
+            self.node = self.slice.get_node(name=node_name)
+        except Exception as e:
+            print(f"Fail: {e}")
+        ElkViewer.__init__(self, self.node)
+        
 
     def create_repository(self, repository_name):
         self._ensure_dir_permissions()
@@ -150,70 +208,60 @@ class elk_export_service(elk_data_transfer):
                 print(f"Fail: {e}")
 
 
-class elk_import_service(elk_data_transfer):
-
-    def __init__(self, slice_name, node_name, git_repo_path='/home/ubuntu/elk-docker-container'):
-        super().__init__(slice_name, node_name)
-        self.repo_path = git_repo_path
-
-    def start_docker(self):
+class PrometheusExporter(MFLib, ):
+    def __init__(self, slice_name, node_name="meas-node", local_storage_directory="/mflib"):
+        super().__init__(slice_name, local_storage_directory)
         try:
-            self.node.execute(f'sudo docker-compose -f {self.repo_path}/docker-compose.yml up -d')
+            self.node = self.slice.get_node(name=node_name)
         except Exception as e:
             print(f"Fail: {e}")
 
-    def stop_docker(self):
+    def create_snapshot(self, user, password):
         try:
-            self.node.execute('sudo docker-compose down')
+            stdout = self.node.execute(
+                f'sudo curl -k -u {user}:{password} -XPOST https://localhost:9090/api/v1/admin/tsdb/snapshot?skip_head=false')
+            return json.loads(stdout[0])["data"]["name"]
         except Exception as e:
             print(f"Fail: {e}")
 
-    def remove_data(self):
+    def export_snapshot_tar(self, snapshot_name):
         commands = [
-            'sudo docker volume rm elk-docker-container_es-data',
-            f'rm -rf {self.repo_path}/imported_data/*'
+            'sudo mkdir -p /home/mfuser/services/prometheus/files/snapshots',
+            f'sudo tar -cvf /home/mfuser/services/prometheus/files/snapshots/{snapshot_name}.tar -C /opt/data/fabric_prometheus/prometheus/snapshots .',
         ]
-        try:
-            for command in commands:
-                self.node.execute(command)
-        except Exception as e:
-            print(f"Fail: {e}")
+        for command in commands:
+            try:
+                self.node.execute(command=command, quiet=True)
+            except Exception as e:
+                return f"Fail: {e}"
+        return f"Successfully exported {snapshot_name} to /home/mfuser/services/prometheus/files/snapshots/"
 
-    def install_docker(self):
+    def view_snapshot_directory(self):
         commands = [
-            'sudo apt-get update',
-            'sudo apt-get install docker -y',
-            'sudo apt-get install docker-compose -y',
-            'sudo docker -v',
-            'sudo docker-compose -v'
-        ]
-        try:
-            for command in commands:
-                self.node.execute(command)
-        except Exception as e:
-            print(f"Fail: {e}")
-
-    def clone_repository(self):
-        try:
-
-            self.node.execute(
-                f'sudo git clone https://github.com/jackhancockuky/elk-docker-container.git {self.repo_path}')
-        except Exception as e:
-            print(f"Fail: {e}")
-
-    def setup_nat64(self, node_name):
-        commands = [
-            f"sudo sed -i '1s/^/0.0.0.0 {node_name}\\n/' /etc/hosts",
-            "sudo sed -i '/nameserver/d' /etc/resolv.conf",
-            "sudo sh -c 'echo nameserver 2a00:1098:2c::1 >> /etc/resolv.conf'",
-            "sudo sh -c 'echo nameserver 2a01:4f8:c2c:123f::1 >> /etc/resolv.conf'",
-            "sudo sh -c 'echo nameserver 2a00:1098:2b::1 >> /etc/resolv.conf'"
+            'echo snapshots in directory on measurement node:',
+            'ls /home/mfuser/services/prometheus/files/snapshots/'
         ]
         for command in commands:
             try:
                 self.node.execute(command)
             except Exception as e:
                 print(f"Fail: {e}")
+
+
+class ElkImportTool(ElkViewer, Importer):
+    def __init__(self, slice_name, node_name, git_repo_path='/home/ubuntu/data-import-containers'):
+        self.slice_name = slice_name
+        try:
+            self.slice = fablib.get_slice(name=self.slice_name)
+        except Exception as e:
+            print(f"Fail: {e}")
+        try:
+            self.node = self.slice.get_node(name=node_name)
+        except Exception as e:
+            print(f"Fail: {e}")
+        
+        ElkViewer.__init__(self, self.node)
+        Importer.__init__(self, self.node, "elk", git_repo_path)
 
     def import_snapshot(self, snapshot_file_name):
         """
@@ -224,6 +272,7 @@ class elk_import_service(elk_data_transfer):
         repository_directory(optional, str): ELK Repository directory path on node (Defaults to git repo settings)
         """
         try:
+            self.node.execute(f"echo uploading {snapshot_file_name} to measurement node..")
             self.node.upload_file(f"./snapshots/{snapshot_file_name}", f'/tmp/{snapshot_file_name}')
         except Exception as e:
             print(f"Fail: {e}")
@@ -232,9 +281,9 @@ class elk_import_service(elk_data_transfer):
             "echo 'Creating imported_data directory..'",
             f"sudo mkdir {self.repo_path}/imported_data",
             "echo 'Moving snapshot file..'",
-            f"sudo mv /tmp/{self.repo_path} {self.repo_path}/snapshots/",
+            f"sudo mv /tmp/{snapshot_file_name} {self.repo_path}/snapshots/",
             "echo 'Untarring snapshot data into shared docker volume..'",
-            f"sudo tar -xvf {self.repo_path}/snapshots/{self.repo_path} -C {self.repo_path}/imported_data"
+            f"sudo tar -xvf {self.repo_path}/snapshots/{snapshot_file_name} -C {self.repo_path}/imported_data"
         ]
         for command in commands:
             try:
@@ -264,59 +313,19 @@ class elk_import_service(elk_data_transfer):
             except Exception as e:
                 print(f"Fail: {e}")
 
-
-# TODO: Decide if I should create a base init class for both?
-class prometheus_data_transfer:
-    def __init__(self, slice_name, node_name):
-        """
-        Constructor. Builds a base class for all Prometheus data transfer tools
-        - Prometheus
-            - Export
-            - Import
-        """
-        super().__init__()
-        self.slice_name = slice_name
-        try:
-            self.slice = fablib.get_slice(name=self.slice_name)
-        except Exception as e:
-            print(f"Fail: {e}")
-        try:
-            self.node = self.slice.get_node(name=node_name)
-        except Exception as e:
-            print(f"Fail: {e}")
-
-
-class prometheus_export_service(prometheus_data_transfer):
-    def __init__(self, slice_name, node_name):
-        super().__init__(slice_name, node_name)
-        
-    def create_snapshot(self, user, password):
-        try:
-            stdout = self.node.execute(f'sudo curl -k -u {user}:{password} -XPOST https://localhost:9090/api/v1/admin/tsdb/snapshot?skip_head=false')
-            return json.loads(stdout[0])["data"]["name"]
-        except Exception as e:
-            print(f"Fail: {e}")
-        
-    def export_snapshot_tar(self, snapshot_name):
+    def remove_data(self):
         commands = [
-            'sudo mkdir -p /home/mfuser/services/prometheus/files/snapshots',
-            f'sudo tar -cvf /home/mfuser/services/prometheus/files/snapshots/{snapshot_name}.tar -C /opt/data/fabric_prometheus/prometheus/snapshots .',
+            'sudo docker volume rm elk-docker-container_es-data',
+            f'rm -rf {self.repo_path}/imported_data/*'
         ]
-        for command in commands:
-            try:
-                self.node.execute(command=command, quiet=True)
-            except Exception as e:
-                return f"Fail: {e}"
-        return f"Successfully exported {snapshot_name} to /home/mfuser/services/prometheus/files/snapshots/"
-                
-
-    def view_snapshot_directory(self):
-        commands = [
-            'echo snapshots in directory on measurement node:',
-            'ls /home/mfuser/services/prometheus/files/snapshots/'
-        ]
-        for command in commands:
-            try:
+        try:
+            for command in commands:
                 self.node.execute(command)
-            except Exception as e:
-                print(f"Fail: {e}")
+        except Exception as e:
+            print(f"Fail: {e}")
+
+
+# class PrometheusImportTool(Importer):
+#     def __init__(self, slice_name, node_name, git_repo_path='/home/ubuntu/data-import-containers'):
+#         self.service = "prometheus"
+#         super().__init__(slice_name, node_name, self.service, git_repo_path)
