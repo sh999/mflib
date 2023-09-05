@@ -731,7 +731,7 @@ Experiment_Nodes
             # needed to fix sudo unable to resolve error
             commands = """
             sudo echo -n "127.0.0.1 " | sudo cat - /etc/hostname  | sudo tee -a /etc/hosts;
-            sudo echo -n "2a01:4f9:c010:3f02:64:0:b9c7:6e85       objects.githubusercontent.com\n"|sudo tee
+            sudo echo -n "2a01:4f9:c010:3f02:64:0:b9c7:6e85       objects.githubusercontent.com\n"|sudo tee -a /etc/hosts;
             """
             stdout, stderr = node.execute(commands, quiet=True)
             self.mflib_logger.info(f"STDOUT: {stdout}")
