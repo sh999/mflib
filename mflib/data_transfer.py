@@ -24,6 +24,7 @@
 from fabrictestbed_extensions.fablib.fablib import fablib
 import json
 from mflib.mflib import MFLib
+import time
 
 
 class ImportTool:
@@ -82,7 +83,7 @@ class ImportTool:
 
     def stop_docker(self):
         try:
-            self.node.execute(f'sudo {self.repo_path}/{self.service}/docker-compose down')
+            self.node.execute(f'sudo docker-compose -f {self.repo_path}/{self.service}/docker-compose.yml down')
         except Exception as e:
             print(f"Fail: {e}")
 
@@ -297,13 +298,14 @@ class ElkImporter(ImportTool):
         for cmd in cmds:
             try:
                 self.node.execute(cmd)
+                time.sleep(5)
             except Exception as e:
                 print(f"Fail: {e}")
 
     def remove_data(self):
         commands = [
             'sudo docker volume rm elk_es-data',
-            f'rm -rf {self.repo_path}/imported_data/*'
+            f'sudo rm -rf {self.repo_path}/imported_data/*'
         ]
         try:
             for command in commands:
