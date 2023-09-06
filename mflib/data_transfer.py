@@ -28,7 +28,7 @@ import time
 
 
 class ImportTool:
-    def __init__(self, node, service, git_repo_path='/home/ubuntu/data-import-containers'):
+    def __init__(self, node, service, git_repo_path='/home/ubuntu/mf-data-import-containers'):
         """
         Constructor. Builds a base class for the import service (for both ELK and Prometheus)
         - Elk
@@ -71,7 +71,7 @@ class ImportTool:
         try:
 
             self.node.execute(
-                f'sudo git clone https://github.com/jackhancockuky/data-import-containers.git {self.repo_path}')
+                f'sudo git clone https://github.com/fabric-testbed/mf-mf-data-import-containers {self.repo_path}')
         except Exception as e:
             print(f"Fail: {e}")
 
@@ -239,7 +239,7 @@ class PrometheusExporter(MFLib):
 
 
 class ElkImporter(ImportTool):
-    def __init__(self, slice_name, node_name, git_repo_path='/home/ubuntu/data-import-containers'):
+    def __init__(self, slice_name, node_name, git_repo_path='/home/ubuntu/mf-data-import-containers'):
         self.slice_name = slice_name
         try:
             self.slice = fablib.get_slice(name=self.slice_name)
@@ -351,7 +351,7 @@ class ElkImporter(ImportTool):
 
 
 class PrometheusImporter(ImportTool):
-    def __init__(self, slice_name, node_name, git_repo_path='/home/ubuntu/data-import-containers'):
+    def __init__(self, slice_name, node_name, git_repo_path='/home/ubuntu/mf-data-import-containers'):
         self.slice_name = slice_name
         try:
             self.slice = fablib.get_slice(name=self.slice_name)
