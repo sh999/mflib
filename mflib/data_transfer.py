@@ -28,18 +28,26 @@ import time
 
 
 class ImportTool:
+    """
+    Parent class for import classes (Elk and Prometheus)
+    """
+
     def __init__(self, node, service, git_repo_path='/home/ubuntu/mf-data-import-containers'):
         """
-        Constructor. Builds a base class for the import service (for both ELK and Prometheus)
-        - Elk
-            - Export
-            - Import
+        Constructor
+        Args:
+            node (fablib.node): Fabric node from slice.get_node()
+            service (str): Name of the service used (Elk or Prometheus)
+            git_repo_path (str): Path to where the git repo directory is on the node
         """
         self.repo_path = git_repo_path
         self.node = node
         self.service = service
 
     def install_docker(self):
+        """
+        Installs Docker and Docker-Compose then prints their versions.
+        """
         commands = [
             'sudo apt-get update',
             'sudo apt-get install docker -y',
@@ -54,6 +62,10 @@ class ImportTool:
             print(f"Fail: {e}")
 
     def setup_nat64(self, node_name):
+        """
+        NAT64 script to allow accessing IPV4 and IPV6 sites.
+        This function should be removed when NAT64 is fixed.
+        """
         commands = [
             f"sudo sed -i '1s/^/0.0.0.0 {node_name}\\n/' /etc/hosts",
             "sudo sed -i '/nameserver/d' /etc/resolv.conf",
@@ -68,6 +80,9 @@ class ImportTool:
                 print(f"Fail: {e}")
 
     def clone_repository(self):
+        """
+        Clones the data-import docker-container repository from GitHub.
+        """
         try:
 
             self.node.execute(
@@ -76,12 +91,18 @@ class ImportTool:
             print(f"Fail: {e}")
 
     def start_docker(self):
+        """
+        Starts the docker-compose app for the current service (Elk or Prometheus).
+        """
         try:
             self.node.execute(f'sudo docker-compose -f {self.repo_path}/{self.service}/docker-compose.yml up -d')
         except Exception as e:
             print(f"Fail: {e}")
 
     def stop_docker(self):
+        """
+        Stops the docker-compose app for the current service (Elk or Prometheus).
+        """
         try:
             self.node.execute(f'sudo docker-compose -f {self.repo_path}/{self.service}/docker-compose.yml down')
         except Exception as e:
@@ -89,21 +110,32 @@ class ImportTool:
 
 
 class ElkExporter(MFLib):
+    """
+    Tool for Exporting ELK snapshots.
+    """
     def __init__(self, slice_name="", local_storage_directory="/tmp/mflib", node_name="meas-node"):
+        """
+        Constructor
+        Args:
+            slice_name (fablib.slice): Slice object name already set with experiment topology.
+            local_storage_directory (str, optional): Directory where local data will be stored.
+                Defaults to "/tmp/mflib".
+            node_name (str): Name of the measurement node.
+                Defaults to meas-node
+        """
         super().__init__(slice_name, local_storage_directory)
         try:
             self.node = self.slice.get_node(name=node_name)
         except Exception as e:
             print("Yeah")
             print(f"Fail: {e}")
-        
 
     def create_repository(self, repository_name):
         self._ensure_dir_permissions()
         """
-        registers a snapshot repo using elk rest api
+        Registers a snapshot repo using ELK rest api
         Args:
-            repository_name(str): name of the repo to be created 
+            repository_name(str): name of the repo to be created.
         """
         snapshot_directory = "/usr/share/elasticsearch/backup"
         cmd = f'curl -X PUT "http://localhost:9200/_snapshot/{repository_name}?pretty" -H "Content-Type: application/json" -d \'{{ "type": "fs", "settings": {{ "location": "{snapshot_directory}" }} }}\''
@@ -114,12 +146,11 @@ class ElkExporter(MFLib):
 
     def create_snapshot(self, repository_name, snapshot_name):
         """
-        creates a snapshot repo using elk rest api
+        Creates a snapshot repository using elk rest api
         Args:
-            repository_name(str): name of the repo to be created 
+            repository_name(str): name of the repository
             snapshot_name(str): name of the snapshot to be created
         """
-
         cmd = f'curl -X PUT "http://localhost:9200/_snapshot/{repository_name}/{snapshot_name}?wait_for_completion=true&pretty" -H "Content-Type: application/json" -d \'"ignore_unavailable": true, "include_global_state": false\''
         try:
             self.node.execute(cmd)
@@ -127,6 +158,11 @@ class ElkExporter(MFLib):
             print(f"Fail: {e}")
 
     def export_snapshot_tar(self, snapshot_name):
+        """
+        Compresses and exports an ELK snapshot as a tar file.
+        Args:
+            snapshot_name(str): name of the snapshot to be exported
+        """
         self._ensure_dir_permissions()
         commands = [
             'sudo mkdir -p /home/mfuser/services/elk/files/snapshots',
@@ -140,6 +176,9 @@ class ElkExporter(MFLib):
         self.view_snapshot_directory()
 
     def _ensure_dir_permissions(self):
+        """
+        Gives the ELK docker volume permission to be exported.
+        """
         commands = [
             'sudo chown -R 1000:1000 /var/lib/docker/volumes/elk_snapshotbackup',
             'sudo chown -R 1000:1000 /var/lib/docker/volumes/elk_snapshotbackup/_data',
@@ -150,13 +189,9 @@ class ElkExporter(MFLib):
             except Exception as e:
                 print(f"Fail: {e}")
 
-    ##### Query ELK data #####
-
-    # View available indices
     def view_indices(self):
         """
-        show existing elk indices using elk rest api
-        
+        Show existing elk indices using elk rest api
         """
         cmd = f'curl "http://localhost:9200/_cat/indices?v"'
         try:
@@ -164,11 +199,10 @@ class ElkExporter(MFLib):
         except Exception as e:
             print(f"Fail: {e}")
 
-    # View a repository
+
     def view_repository(self, repository_name):
         """
-        show existing elk repository using elk rest api
-        
+        Show existing elk repository using elk rest api
         """
         cmd = f'curl -X GET "http://localhost:9200/_cat/snapshots/{repository_name}?pretty"'
         try:
@@ -178,7 +212,7 @@ class ElkExporter(MFLib):
 
     def view_snapshot(self, repository_name, snapshot_name):
         """
-        show elk snapshot inside repository using elk rest api
+        Show elk snapshot inside repository using elk rest api
         """
         cmd = f'curl -X GET "http://localhost:9200/_snapshot/{repository_name}/{snapshot_name}?pretty"'
         try:
@@ -187,6 +221,9 @@ class ElkExporter(MFLib):
             print(f"Fail: {e}")
 
     def view_snapshot_directory(self):
+        """
+        Show ELK tar files available inside snapshot directory on meas_node
+        """
         commands = [
             'echo snapshots in directory on measurement node:',
             'ls /home/mfuser/services/elk/files/snapshots/'
@@ -199,7 +236,19 @@ class ElkExporter(MFLib):
 
 
 class PrometheusExporter(MFLib):
+    """
+    Tool for Exporting Prometheus snapshots.
+    """
     def __init__(self, slice_name, local_storage_directory="/tmp/mflib", node_name="meas-node"):
+        """
+        Constructor
+        Args:
+            slice_name (fablib.slice): Slice object name already set with experiment topology.
+            local_storage_directory (str, optional): Directory where local data will be stored.
+                Defaults to "/tmp/mflib".
+            node_name (str): Name of the measurement node.
+                Defaults to meas-node
+        """
         super().__init__(slice_name, local_storage_directory)
         try:
             self.node = self.slice.get_node(name=node_name)
@@ -207,6 +256,13 @@ class PrometheusExporter(MFLib):
             print(f"Fail: {e}")
 
     def create_snapshot(self, user, password):
+        """
+        Creates a prometheus snapshot using the rest api.
+        Requires Prometheus credentials to use.
+        Args:
+            user (str): Prometheus username
+            password (str): Prometheus password
+        """
         try:
             stdout = self.node.execute(
                 f'sudo curl -k -u {user}:{password} -XPOST https://localhost:9090/api/v1/admin/tsdb/snapshot?skip_head=false')
@@ -215,6 +271,11 @@ class PrometheusExporter(MFLib):
             print(f"Fail: {e}")
 
     def export_snapshot_tar(self, snapshot_name):
+        """
+        Exports Prometheus snapshot file out of docker into meas_node
+        Args:
+            snapshot_name (str): Name of snapshot to export
+        """
         commands = [
             'sudo mkdir -p /home/mfuser/services/prometheus/files/snapshots',
             f'sudo tar -cvf /home/mfuser/services/prometheus/files/snapshots/{snapshot_name}.tar -C /opt/data/fabric_prometheus/prometheus/snapshots .',
@@ -227,6 +288,9 @@ class PrometheusExporter(MFLib):
         return f"Successfully exported {snapshot_name} to /home/mfuser/services/prometheus/files/snapshots/"
 
     def view_snapshot_directory(self):
+        """
+        Show Prometheus tar files available inside snapshot directory on meas_node
+        """
         commands = [
             'echo snapshots in directory on measurement node:',
             'ls /home/mfuser/services/prometheus/files/snapshots/'
@@ -239,7 +303,19 @@ class PrometheusExporter(MFLib):
 
 
 class ElkImporter(ImportTool):
+    """
+    Tool for Importing ELK snapshots.
+    """
     def __init__(self, slice_name, node_name, git_repo_path='/home/ubuntu/mf-data-import-containers'):
+        """
+        Constructor
+        Args:
+            slice_name (fablib.slice): Slice object name already set with experiment topology.
+            node_name (str): Name of the measurement node.
+                Defaults to meas-node
+            git_repo_path (str, optional): Directory where local data will be stored.
+                Defaults to "/home/ubuntu/mf-data-import-containers".
+        """
         self.slice_name = slice_name
         try:
             self.slice = fablib.get_slice(name=self.slice_name)
@@ -256,8 +332,6 @@ class ElkImporter(ImportTool):
         Untars snapshot file, creates repository directory and places snapshot data inside.
         Args:
         snapshot_file_name(str): ELK snapshot file name
-        snapshot_file_path(optional, str): ELK Snapshot file path on node (Defaults to snapshot 
-        repository_directory(optional, str): ELK Repository directory path on node (Defaults to git repo settings)
         """
         try:
             self.node.execute(f"echo uploading {snapshot_file_name} to measurement node..")
@@ -280,6 +354,11 @@ class ElkImporter(ImportTool):
                 print(f"Fail: {e}")
 
     def register_repository(self, repository_name):
+        """
+            You must register a repository before you can take or restore snapshots.
+            Args:
+                repository_name(str): Name of repository to register
+        """
         cmd = f'curl -X PUT -H "Content-Type: application/json" -d \'{{"type": "fs", "settings": {{"location": "/usr/share/elasticsearch/imported_data/_data", "compress": true }} }}\' http://localhost:9200/_snapshot/{repository_name}'
         try:
             self.node.execute(cmd)
@@ -303,6 +382,9 @@ class ElkImporter(ImportTool):
                 print(f"Fail: {e}")
 
     def remove_data(self):
+        """
+        Deletes the docker volume and snapshot directory so that you can add new data.
+        """
         commands = [
             'sudo docker volume rm elk_es-data',
             f'sudo rm -rf {self.repo_path}/imported_data/*'
@@ -313,13 +395,9 @@ class ElkImporter(ImportTool):
         except Exception as e:
             print(f"Fail: {e}")
 
-    ##### Query ELK data #####
-
-    # View available indices
     def view_indices(self):
         """
         show existing elk indices using elk rest api
-        
         """
         cmd = f'curl "http://localhost:9200/_cat/indices?v"'
         try:
@@ -327,11 +405,9 @@ class ElkImporter(ImportTool):
         except Exception as e:
             print(f"Fail: {e}")
 
-    # View a repository
     def view_repository(self, repository_name):
         """
         show existing elk repository using elk rest api
-        
         """
         cmd = f'curl -X GET "http://localhost:9200/_cat/snapshots/{repository_name}?pretty"'
         try:
@@ -351,7 +427,19 @@ class ElkImporter(ImportTool):
 
 
 class PrometheusImporter(ImportTool):
+    """
+    Tool for Importing Prometheus snapshots.
+    """
     def __init__(self, slice_name, node_name, git_repo_path='/home/ubuntu/mf-data-import-containers'):
+        """
+        Constructor
+        Args:
+            slice_name (fablib.slice): Slice object name already set with experiment topology.
+            node_name (str): Name of the measurement node.
+                Defaults to meas-node
+            git_repo_path (str, optional): Directory where local data will be stored.
+                Defaults to "/home/ubuntu/mf-data-import-containers".
+        """
         self.slice_name = slice_name
         try:
             self.slice = fablib.get_slice(name=self.slice_name)
