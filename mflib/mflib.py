@@ -46,7 +46,7 @@ class MFLib(Core):
     MFLib allows for adding and controlling the MeasurementFramework in a Fabric experiementers slice.
     """
 
-    mflib_class_version = "1.0.37"
+    mflib_class_version = "1.0.38"
 
     def set_mflib_logger(self):
         """
@@ -134,7 +134,7 @@ class MFLib(Core):
             (interfaces[this_site]).append(this_interface)
 
         # Note this is also defined in self.measurement_node_name but we are in a static method
-        meas_nodename = "meas-node" 
+        meas_nodename = "meas-node"
 
         meas_image = image
         meas = slice.add_node(name=meas_nodename, site=site)
@@ -239,7 +239,7 @@ class MFLib(Core):
         bss = self.get_bootstrap_status()
         if "msg" in bss:
             print(f"Bootstrap Download failed {bss['msg']}")
-            return False 
+            return False
         if bss:
             # print("Bootstrap status is")
             # print(bss)
@@ -470,7 +470,7 @@ class MFLib(Core):
             self.mflib_logger.info("Inititialization Done.")
             return True
 
-    def instrumentize(self, services=[ "prometheus", "elk"]):
+    def instrumentize(self, services=["prometheus", "elk"]):
         """
         Instrumentize the slice. This is a convenience method that sets up & starts the monitoring of the slice. Sets up Prometheus, ELK & Grafana.
 
@@ -540,8 +540,6 @@ class MFLib(Core):
                 print(msg)
                 self.mflib_logger.debug(msg)
                 all_data[service] = service_data
-
-
 
         msg = f"Instrumentize Process Complete."
         print(msg)
@@ -733,13 +731,7 @@ Experiment_Nodes
             # needed to fix sudo unable to resolve error
             commands = """
             sudo echo -n "127.0.0.1 " | sudo cat - /etc/hostname  | sudo tee -a /etc/hosts;
-            sudo echo -n "2a01:4f9:c010:3f02:64:0:8c52:7103       github.com\n"|sudo tee -a /etc/hosts;
-            sudo echo -n "2a01:4f9:c010:3f02:64:0:8c52:7009       codeload.github.com\n"|sudo tee -a /etc/hosts;
             sudo echo -n "2a01:4f9:c010:3f02:64:0:b9c7:6e85       objects.githubusercontent.com\n"|sudo tee -a /etc/hosts;
-            sudo echo -n "2600:1fa0:80b4:db49:34d9:6d1e::         ansible-galaxy.s3.amazonaws.com\n"|sudo tee -a /etc/hosts;
-            sudo echo -n "2a01:4f9:c010:3f02:64:0:3455:9777       packages.confluent.io\n"|sudo tee -a /etc/hosts;
-            sudo echo -n "2a01:4f9:c010:3f02:64:0:12d7:8a3a	      registry-1.docker.io\n"|sudo tee -a /etc/hosts;
-            sudo echo -n "2a01:4f9:c010:3f02:64:0:12d7:8a3a	      auth.docker.io\n"|sudo tee -a /etc/hosts;
             """
             stdout, stderr = node.execute(commands, quiet=True)
             self.mflib_logger.info(f"STDOUT: {stdout}")
@@ -756,9 +748,9 @@ Experiment_Nodes
                 meas_node_meas_net_ip = interface.get_ip_addr()
         if meas_node_meas_net_ip:
             execute_threads = {}
-            #cmd = f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts;'
-            #TODO WARNING hardcoded _meas_node name here to match existing docker container needs. Need to update
-            #cmd = f'sudo echo -n "{meas_node_meas_net_ip} _meas_node" | sudo tee -a /etc/hosts;'
+            # cmd = f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}" | sudo tee -a /etc/hosts;'
+            # TODO WARNING hardcoded _meas_node name here to match existing docker container needs. Need to update
+            # cmd = f'sudo echo -n "{meas_node_meas_net_ip} _meas_node" | sudo tee -a /etc/hosts;'
             cmd = f'sudo echo -n "{meas_node_meas_net_ip} {self.measurement_node_name}\n" | sudo tee -a /etc/hosts; sudo echo -n "{meas_node_meas_net_ip} _meas_node\n" | sudo tee -a /etc/hosts;'
             for node in self.slice.get_nodes():
                 execute_threads[node] = node.execute_thread(cmd)
