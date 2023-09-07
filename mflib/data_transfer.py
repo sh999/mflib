@@ -354,7 +354,7 @@ class PrometheusExporter(MFLib):
         """
         username = self.node.get_username()
         ip = self.node.get_management_ip()
-        scp_command = f"scp -F {ssh_config} -i {private_key} {username}@\[{ip}]:/home/mfuser/services/elk/files/snapshots/{snapshot_name}.tar {local_destination}"
+        scp_command = f"scp -F {ssh_config} -i {private_key} {username}@\[{ip}]:/home/mfuser/services/prometheus/files/snapshots/{snapshot_name}.tar {local_destination}"
         return scp_command
 
 
