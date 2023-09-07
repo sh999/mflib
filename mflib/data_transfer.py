@@ -86,7 +86,7 @@ class ImportTool:
         try:
 
             self.node.execute(
-                f'sudo git clone https://github.com/fabric-testbed/mf-mf-data-import-containers {self.repo_path}')
+                f'sudo git clone https://github.com/fabric-testbed/mf-data-import-containers.git {self.repo_path}')
         except Exception as e:
             print(f"Fail: {e}")
 
@@ -107,6 +107,22 @@ class ImportTool:
             self.node.execute(f'sudo docker-compose -f {self.repo_path}/{self.service}/docker-compose.yml down')
         except Exception as e:
             print(f"Fail: {e}")
+            
+    def generate_scp_upload_command(self, snapshot_name, directory_path, ssh_config="ssh_config", private_key="slice_key"):
+        """
+        Creates the command to upload your snapshot file to the node VIA SCP.
+        Args:
+            snapshot_name (str): Name of snapshot file (including extension)
+            directory_path (str): Path to directory containing snapshot file
+            ssh_config (str, optional): Path to Fabric SSH config file
+            private_key (str, optional): Path to Fabric slice private key file
+        Returns:
+            String : SCP command string or error string.
+        """
+        username = self.node.get_username()
+        ip = self.node.get_management_ip()
+        scp_command = f"scp -F {ssh_config} -i {private_key} {directory_path}/{snapshot_name} {username}@\[{ip}]:/tmp/{snapshot_name}"
+        return scp_command
 
 
 class ElkExporter(MFLib):
@@ -234,6 +250,22 @@ class ElkExporter(MFLib):
             except Exception as e:
                 print(f"Fail: {e}")
 
+    def generate_scp_download_command(self, snapshot_name, local_destination, ssh_config="ssh_config", private_key="slice_key"):
+        """
+        Creates the command to download your snapshot file from the meas_node to local pc.
+        Args:
+            snapshot_name (str): Name of snapshot file (including extension)
+            local_destination (str): Path to where you want to place snapshot file
+            ssh_config (str, optional): Path to Fabric SSH config file
+            private_key (str, optional): Path to Fabric slice private key file
+        Returns:
+            String : SCP command string or error string.
+        """
+        username = self.node.get_username()
+        ip = self.node.get_management_ip()
+        scp_command = f"scp -F {ssh_config} -i {private_key} {username}@\[{ip}]:/home/mfuser/services/elk/files/snapshots/{snapshot_name}.tar {local_destination}"
+        return scp_command
+
 
 class PrometheusExporter(MFLib):
     """
@@ -301,6 +333,22 @@ class PrometheusExporter(MFLib):
             except Exception as e:
                 print(f"Fail: {e}")
 
+    def generate_scp_download_command(self, snapshot_name, local_destination, ssh_config="ssh_config", private_key="slice_key"):
+        """
+        Creates the command to download your snapshot file from the meas_node to local pc.
+        Args:
+            snapshot_name (str): Name of snapshot file (including extension)
+            local_destination (str): Path to where you want to place snapshot file
+            ssh_config (str, optional): Path to Fabric SSH config file
+            private_key (str, optional): Path to Fabric slice private key file
+        Returns:
+            String : SCP command string or error string.
+        """
+        username = self.node.get_username()
+        ip = self.node.get_management_ip()
+        scp_command = f"scp -F {ssh_config} -i {private_key} {username}@\[{ip}]:/home/mfuser/services/elk/files/snapshots/{snapshot_name}.tar {local_destination}"
+        return scp_command
+
 
 class ElkImporter(ImportTool):
     """
@@ -326,12 +374,13 @@ class ElkImporter(ImportTool):
         except Exception as e:
             print(f"Fail: {e}")
         super().__init__(self.node, "elk", git_repo_path)
-
-    def import_snapshot(self, snapshot_file_name):
+        
+    def upload_snapshot(self, snapshot_file_name):
         """
-        Untars snapshot file, creates repository directory and places snapshot data inside.
+        Uploads snapshot tar file into meas_node tmp directory.
+        Tar file must be in snapshots directory on Jupyter Hub.
         Args:
-        snapshot_file_name(str): ELK snapshot file name
+        snapshot_file_name(str): ELK snapshot tar file name
         """
         try:
             self.node.execute(f"echo uploading {snapshot_file_name} to measurement node..")
@@ -339,9 +388,17 @@ class ElkImporter(ImportTool):
         except Exception as e:
             print(f"Fail: {e}")
 
+
+    def import_snapshot(self, snapshot_file_name):
+        """
+        Extracts snapshot from tar file and places snapshot in new data directory.
+        Args:
+        snapshot_file_name(str): ELK snapshot file name
+        """
+
         commands = [
             "echo 'Creating imported_data directory..'",
-            f"sudo mkdir {self.repo_path}/{self.service}//imported_data",
+            f"sudo mkdir {self.repo_path}/{self.service}/imported_data",
             "echo 'Moving snapshot file..'",
             f"sudo mv /tmp/{snapshot_file_name} {self.repo_path}/{self.service}/snapshots/",
             "echo 'Untarring snapshot data into shared docker volume..'",
@@ -387,7 +444,7 @@ class ElkImporter(ImportTool):
         """
         commands = [
             'sudo docker volume rm elk_es-data',
-            f'sudo rm -rf {self.repo_path}/imported_data/*'
+            f'sudo rm -rf {self.repo_path}/{self.service}/imported_data/*'
         ]
         try:
             for command in commands:
@@ -466,3 +523,17 @@ class PrometheusImporter(ImportTool):
                 self.node.execute(command)
             except Exception as e:
                 print(f"Fail: {e}")
+
+    def remove_data(self):
+        """
+        Deletes the docker volume and snapshot directory so that you can add new data.
+        """
+        commands = [
+            'sudo docker volume rm prometheus_prom_data',
+            f'sudo rm -rf {self.repo_path}/{self.service}/snapshots'
+        ]
+        try:
+            for command in commands:
+                self.node.execute(command)
+        except Exception as e:
+            print(f"Fail: {e}")
