@@ -43,6 +43,14 @@ class ImportTool:
         self.repo_path = git_repo_path
         self.node = node
         self.service = service
+    
+    def setup_docker_app(self, node_name):
+        """
+        Runs the 3 commands needed to set up the docker-compose app
+        """
+        self.install_docker()
+        self.setup_nat64(node_name)
+        self.clone_repository()
 
     def install_docker(self):
         """
@@ -430,11 +438,10 @@ class ElkImporter(ImportTool):
             snapshot_name(str): ELK Snapshot name
         """
         cmds = ['curl -X DELETE "http://localhost:9200/_all"',
-                f'curl -X POST "http://localhost:9200/_snapshot/{repository_name}/{snapshot_name}/_restore?pretty" -H "Content-Type: application/json" -d \'{{"indices": "*", "index_settings": {{"index.number_of_replicas": 1 }} }}\'']
+                f'curl -X POST "http://localhost:9200/_snapshot/{repository_name}/{snapshot_name}/_restore?pretty" -H "Content-Type: application/json" -d \'{{"indices": "*","rename_pattern": "(.+)","rename_replacement": "restored-$1"}}\'']
         for cmd in cmds:
             try:
                 self.node.execute(cmd)
-                time.sleep(5)
             except Exception as e:
                 print(f"Fail: {e}")
 
