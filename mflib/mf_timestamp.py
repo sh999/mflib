@@ -328,11 +328,11 @@ class mf_timestamp():
             influxdb_node_name(str): which fabric node is influxdb running on
         """
         if (data_type == "packet_timestamp"):
-            remote_file=f"/tmp/{data_node.lower()}_packet_timestamp.csv"
-            measurement_name=f"{data_node.lower()}.novalocal-packet-timestamp"
+            remote_file=f"/tmp/{data_node}_packet_timestamp.csv"
+            measurement_name=f"{data_node}-packet-timestamp"
         elif (data_type == "event_timestamp"):
-            remote_file=f"/tmp/{data_node.lower()}_event_timestamp.csv"
-            measurement_name=f"{data_node.lower()}.novalocal-event-timestamp"
+            remote_file=f"/tmp/{data_node}_event_timestamp.csv"
+            measurement_name=f"{data_node}-event-timestamp"
         else:
             return ("wrong data type")
         query = f'''curl --request POST \
@@ -362,9 +362,9 @@ class mf_timestamp():
         
         remote_file=""
         if (data_type == "packet_timestamp"):
-            remote_file=f"/tmp/{data_node.lower()}_packet_timestamp.csv"
+            remote_file=f"/tmp/{data_node}_packet_timestamp.csv"
         elif (data_type == "event_timestamp"):
-            remote_file=f"/tmp/{data_node.lower()}_event_timestamp.csv"
+            remote_file=f"/tmp/{data_node}_event_timestamp.csv"
         else:
             return ("wrong data type")
         try:
