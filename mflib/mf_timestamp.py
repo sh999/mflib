@@ -315,7 +315,7 @@ class mf_timestamp():
         #print (f"The docker command is {command}")
         stdout, stderr= node.execute(command)
         
-    def generate_csv_on_influxdb_node(self, data_node, name, data_type, bucket, org, token, influxdb_node_name):
+    def get_query_for_csv(self, data_node, name, data_type, bucket, org, token):
         """
         Generates a .csv file in the influxdb container for the query data
         Args:
@@ -344,11 +344,7 @@ class mf_timestamp():
                         |> range(start: 0) 
                         |> filter(fn: (r) => r._measurement == "{measurement_name}" and r.name=="{name}")'
                  '''
-        try:
-            node_influxdb = self.slice.get_node(name=influxdb_node_name)
-        except Exception as e:
-            print(f"Fail: {e}")
-        node_influxdb.execute(query)
+        return (query)
         
     def download_file_from_influxdb(self, data_node, data_type, influxdb_node_name, local_file):
         """
