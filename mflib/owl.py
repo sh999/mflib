@@ -95,7 +95,7 @@ def nodes_ip_addrs(slice):
     node_ips = {}
 
     for node in nodes:
-        node_name = slice.get_name()
+        node_name = node.get_name()
         try:
             node_ips[node_name] = get_node_ip_addr(slice, node_name)
 
