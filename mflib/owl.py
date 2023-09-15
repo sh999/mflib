@@ -160,7 +160,7 @@ def start_owl_sender(slice, src_node, dst_node, img_name, probe_freq=1, duration
                 --network="host"  \
                 --pid="host" \
                 --privileged \
-                --name owl-sender_{src_ip}_{dst_ip} \
+                --name owl-sender_{src_ip}-{dst_ip} \
                 {img_name}  sock_ops/udp_sender.py  \
                 --ptp-so-file "/MeasurementFramework/user_services/owl/owl/sock_ops/time_ops/ptp_time.so" \
                 --dest-ip {dst_ip} --dest-port 5005 --frequency {probe_freq} \
