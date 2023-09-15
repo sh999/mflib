@@ -441,3 +441,77 @@ def download_output(node, local_out_dir):
 
             node.execute(f"sudo rm {remote_tmp_path}") 
             
+def send_to_influxdb(node, pcapfile, img_name, influxdb_token=None,
+        influxdb_org=None, influxdb_url=None, influxdb_bucket=None):
+    """
+    Send OWL pcap data to InfluxDB in a remote server.
+    Invokes OWL container to call parse_and_send() in MF's sock_ops/send_data.py.
+
+    :param node: fablib Node object where pcap data will be sent to InfluxDB.
+    :type node: fablib.Node
+    :param pcapfile: Packet Capture file name.
+    :type pcapfile: str
+    :param img_name: OWL Docker image name.
+    :type img_name: str
+    :param influxdb_token: InfluxDB token string.
+    :type influxdb_token: str
+    :param influxdb_org: InfluxDB org name.
+    :type influxdb_org: str
+    :param influxdb_url: IP address of the measurement node that has InfluxDB (omit http and port; just have the IP address).
+    :type influxdb_url: str
+    :param influxdb_bucket: InfluxDB bucket ID.
+    :type influxdb_bucket: str
+    """
+    print("Running owl.send_to_influxdb().")
+    print(f"Sending InfluxDB data to the node at {influxdb_url}.")
+
+    targetdir = "/owl-output/"
+    pcapfile = targetdir + pcapfile
+    influxdb_org = "my-org"
+    port = "8086"
+    influxdb_url = influxdb_url +  ":" + port
+    dir_name = "/home/rocky/owl-output/"
+    cmd = f'sudo docker run -d --rm \
+    --mount type=bind,source={dir_name},target={targetdir} \
+    --network="host"  \
+    --pid="host" \
+    --privileged \
+    --name owl-to-influx \
+    {img_name} sock_ops/send_data.py \
+    --pcapfile {pcapfile} \
+    --token {influxdb_token} \
+    --org {influxdb_org} \
+    --url {influxdb_url} \
+    --bucket {influxdb_bucket}' 
+    
+    print(f"In the pcap sender node, running the docker command:\n{cmd}\n")
+
+    try:
+        node.execute(cmd)
+    except Exception as exception:
+        print(exception)
+
+def get_node_ip_addr(slice, node_name):
+    """
+    Get the node (named 'node_name') experiment IP address.
+    This IP is useful because the pcap file to send to InfluxDB is 
+    stored in the format of the sender's IP address ("${node_ip}.pcap").
+    
+    :param slice:
+    :type slice: fablib.Slice
+    :param node_name:
+    :type node_name: str
+    :return: IP addresses
+    :rtype: str
+    """
+    
+    # Assumes there is only 1 experimenter's IP
+    node = slice.get_node(node_name)
+    # The following line excludes management net interface
+    interfaces = node.get_interfaces()
+    exp_network_ips = []
+    for interface in interfaces:
+        network = interface.toDict()['network']
+        if 'l3_meas_net' not in network:
+            node_ip = str(interface.get_ip_addr())
+    return node_ip
